@@ -1,0 +1,30 @@
+# robots.txt para Inka Legacy Tours
+# Optimizado para SEO
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /scripts/
+
+# Permitir explícitamente contenido importante
+Allow: /Imagenes/
+Allow: /*.css$
+Allow: /*.js$
+
+# Sitemap
+Sitemap: https://inkalegacy.com/sitemap.xml
+
+# Rastreadores específicos
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /Imagenes/
+
+User-agent: Bingbot
+Allow: /
+
+# Tiempo de espera entre solicitudes (opcional)
+Crawl-delay: 1

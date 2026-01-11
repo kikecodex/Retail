@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Iniciar servidor web local",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Start-Process powershell -ArgumentList 'cd \"c:\\Users\\Hp\\Desktop\\Inkalegacy_Paquetes\"; python -m http.server 8080' -NoNewWindow"
+			]
+		}
+	]
+}
