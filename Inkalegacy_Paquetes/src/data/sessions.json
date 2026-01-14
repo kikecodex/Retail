@@ -1,0 +1,125 @@
+{
+    "test_new_features": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T09:50:28.777068",
+                "sender": "user",
+                "message": "Juan Pérez"
+            },
+            {
+                "timestamp": "2026-01-14T09:50:28.781299",
+                "sender": "user",
+                "message": "Juan Pérez, 987654321, 15 de febrero"
+            }
+        ],
+        "profile": {
+            "booking_data": {
+                "name": "Juan Pérez",
+                "phone": "987654321",
+                "date": "15 de febrero",
+                "people": null
+            }
+        },
+        "state": "WAITING_CROSS_SELL_MONTANA_7_COLORES",
+        "last_interaction": "2026-01-14T09:50:28.784259"
+    },
+    "test_ret": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T09:59:54.384653",
+                "sender": "user",
+                "message": "no me gusta"
+            },
+            {
+                "timestamp": "2026-01-14T09:59:54.390002",
+                "sender": "user",
+                "message": "muy dificil"
+            }
+        ],
+        "profile": {},
+        "state": "VIEWING_MONTANA_7_COLORES",
+        "last_interaction": "2026-01-14T09:59:54.388812"
+    },
+    "test_retention": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T10:02:51.339014",
+                "sender": "user",
+                "message": "xyz123"
+            }
+        ],
+        "profile": {},
+        "state": "MENU",
+        "last_interaction": "2026-01-14T10:02:51.338071"
+    },
+    "test_user_itinerary": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T10:03:17.517257",
+                "sender": "user",
+                "message": "quisiera que me organices un tours en Cusco, Valle sagrado y Machu Picchu durante una semana"
+            },
+            {
+                "timestamp": "2026-01-14T10:03:17.520228",
+                "sender": "user",
+                "message": "si"
+            },
+            {
+                "timestamp": "2026-01-14T10:03:17.523247",
+                "sender": "user",
+                "message": "deseo viajar el 15 de febrero"
+            },
+            {
+                "timestamp": "2026-01-14T10:03:17.528119",
+                "sender": "user",
+                "message": "2"
+            }
+        ],
+        "profile": {
+            "itinerary_date": "deseo viajar el 15 de febrero",
+            "accommodation_pref": "2"
+        },
+        "state": "FINALIZING_ITINERARY",
+        "last_interaction": "2026-01-14T10:03:17.530116"
+    },
+    "test_ret_full": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T10:09:00.327036",
+                "sender": "user",
+                "message": "no me convence"
+            }
+        ],
+        "profile": {},
+        "state": "VIEWING_PALCOYO",
+        "last_interaction": "2026-01-14T10:09:00.325054"
+    },
+    "test_learning_user": {
+        "history": [
+            {
+                "timestamp": "2026-01-14T10:15:13.640355",
+                "sender": "user",
+                "message": "Quiero ir a la Laguna Chincheros"
+            },
+            {
+                "timestamp": "2026-01-14T10:15:13.659498",
+                "sender": "user",
+                "message": "cuánto cuesta el tour a Maras Moray"
+            },
+            {
+                "timestamp": "2026-01-14T10:15:58.326317",
+                "sender": "user",
+                "message": "Quiero ir a la Laguna Chincheros"
+            },
+            {
+                "timestamp": "2026-01-14T10:15:58.332400",
+                "sender": "user",
+                "message": "cuánto cuesta el tour a Maras Moray"
+            }
+        ],
+        "profile": {},
+        "state": "MENU",
+        "interaction_count": 8,
+        "last_interaction": "2026-01-14T10:15:58.337489"
+    }
+}

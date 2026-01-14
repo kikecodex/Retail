@@ -12,19 +12,28 @@ const chatNoti = document.querySelector('.chat-noti');
 let isChatOpen = false;
 
 // Toggle Chat Window
+// Toggle Chat Window
 function toggleChat() {
     isChatOpen = !isChatOpen;
     chatWindow.classList.toggle('active');
     chatBubble.classList.toggle('active');
 
-    // Hide notification when opened
+    // Force display change for smoother transition/guaranteed visibility
     if (isChatOpen) {
+        chatWindow.style.display = 'flex';
+        // Hide notification when opened
         chatNoti.style.display = 'none';
         chatInput.focus();
+    } else {
+        // Allow animation to play before hiding (handled by CSS, but strictly hiding after delay if needed)
+        // For now, removing 'active' class handles opacity/transform, but we keep display flex for animation
+        // We'll rely on CSS 'display: none' when not active if defined, or handle it here.
+        // Given existing CSS uses .chat-window.active { display: flex; }, we can remove manual display style to let class handle it
+        chatWindow.style.display = '';
     }
 }
 
-// Configuración de la API (URL de Render del dashboard)
+// Configuración de la API (URL de Render - Producción)
 const API_URL = "https://llamita-agent.onrender.com";
 
 // Send Message
@@ -96,3 +105,38 @@ window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
 window.sendQuickMessage = sendQuickMessage;
 window.handleChatKey = handleChatKey;
+
+
+// -- CUSTOM AVATAR INJECTION --
+
+// -- CUSTOM AVATAR INJECTION --
+// Using CHAT_AVATAR_BASE64 from chat_assets.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Update Bubble Icon
+    const bubbleIcon = document.querySelector('.chat-bubble i');
+    const bubbleContainer = document.querySelector('.chat-bubble');
+
+    // Check if the asset loaded
+    if (typeof CHAT_AVATAR_BASE64 !== 'undefined') {
+        if (bubbleIcon && bubbleContainer) {
+            const img = document.createElement('img');
+            img.src = CHAT_AVATAR_BASE64;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            img.alt = 'Chat';
+            bubbleIcon.replaceWith(img);
+        }
+
+        // Update Chat Header Avatar
+        const headerAvatar = document.querySelector('.chat-avatar');
+        if (headerAvatar) {
+            headerAvatar.src = CHAT_AVATAR_BASE64;
+        }
+    } else {
+        console.warn("Chat assets not loaded");
+    }
+});
+
