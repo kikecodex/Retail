@@ -51,12 +51,11 @@ function LoginForm() {
             <CardContent className="p-8">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <span className="text-white font-bold text-3xl">O</span>
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span className="text-white font-bold text-3xl">R</span>
                     </div>
-                    <h1 className="text-2xl font-bold">CORPORACIÓN</h1>
-                    <h2 className="text-3xl font-bold text-red-600">OROPEZA&apos;S</h2>
-                    <p className="text-muted-foreground mt-2">Sistema de Gestión Retail</p>
+                    <h1 className="text-2xl font-bold">Sistema Retail</h1>
+                    <p className="text-muted-foreground mt-2">Inicia sesión para continuar</p>
                 </div>
 
                 {/* Formulario */}
