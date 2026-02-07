@@ -1,0 +1,115 @@
+{
+    "id": "piscobamba-2025",
+    "licitacion": {
+        "nomenclatura": "CONCURSO PUBLICO ABREVIADO N°021-2025-GRA/E-1",
+        "derivadoDe": "CONCURSO PUBLICO N°09-GRA/E-1",
+        "entidad": "GOBIERNO REGIONAL DE ANCASH",
+        "objeto": "CONSULTORIA DE OBRA PARA LA ELABORACIÓN DEL EXPEDIENTE TÉCNICO DEL PROYECTO: MEJORAMIENTO DE LOS SERVICIOS EDUCATIVOS DEL INSTITUTO DE EDUCACIÓN SUPERIOR TECNOLÓGICO PÚBLICO DE PISCOBAMBA DEL DISTRITO DE PISCOBAMBA - PROVINCIA DE MARISCAL LUZURIAGA - DEPARTAMENTO DE ANCASH",
+        "cui": "2570094"
+    },
+    "fechaPresentacion": "2025-10-21",
+    "tipoPostor": "CONSORCIO",
+    "consorcio": {
+        "nombre": "CONSORCIO TEC PISCOBAMBA",
+        "representanteComun": {
+            "nombres": "WILMER JACINTO VILLACORTA VILLANUEVA",
+            "dni": "44123632"
+        },
+        "domicilioComun": "PASAJE LOS PINOS MZ. D, LT. 4 – DISTRITO DE HUARAZ – PROVINCIA DE HUARAZ - ANCASH",
+        "correoComun": "coninsa.corp@gmail.com",
+        "integrantes": [
+            {
+                "orden": 1,
+                "tipo": "PERSONA_NATURAL",
+                "razonSocial": "ANTUNEZ CELMI FLORENTINO ANTONIO",
+                "ruc": "10316063484",
+                "dni": "31606348",
+                "domicilio": "Jr. Andrés Avelino Cáceres Urb. EI Milagro Lte. 101 – Independencia – Huaraz - Ancash",
+                "telefono": "925 498 493",
+                "email": "antunez1411@hotmail.com",
+                "esMype": true,
+                "participacion": 40,
+                "obligaciones": [
+                    "RESPONSABLE DEL SERVICIO CONSULTORIA DE OBRA",
+                    "Responsable de la veracidad de los documentos registrales y notariales",
+                    "Responsable de su aporte de experiencia del postor en la especialidad"
+                ]
+            },
+            {
+                "orden": 2,
+                "tipo": "PERSONA_JURIDICA",
+                "razonSocial": "CONINSA CORP S.A.C.",
+                "ruc": "20601782996",
+                "representanteLegal": {
+                    "nombres": "TREJO CASTROMONTE MITCHELL POMPEYO",
+                    "dni": "42775563",
+                    "cargo": "Gerente General"
+                },
+                "domicilio": "PJ. Bello Horizonte N°183-Distrito de Independencia-Provincia de Huaraz - Ancash",
+                "telefono": "928 044 500",
+                "email": "coninsa.corp@gmail.com",
+                "esMype": true,
+                "participacion": 60,
+                "obligaciones": [
+                    "RESPONSABLE DEL SERVICIO CONSULTORIA DE OBRA",
+                    "Responsable de la veracidad de los documentos registrales y notariales",
+                    "Responsable de su aporte de experiencia del postor en la especialidad",
+                    "Responsable del aporte del personal clave y equipamiento estratégico",
+                    "Responsable de acreditar Sistema de Buenas Prácticas Laborales (BPL)"
+                ]
+            }
+        ]
+    },
+    "ofertaEconomica": {
+        "costoDirecto": 350211.86,
+        "gastosGeneralesPorcentaje": 10.00,
+        "gastosGenerales": 35021.19,
+        "utilidadPorcentaje": 10.00,
+        "utilidad": 35021.19,
+        "subTotal": 420254.24,
+        "igvPorcentaje": 18,
+        "igv": 75645.76,
+        "montoTotal": 495900.00,
+        "montoEnLetras": "CUATROCIENTOS NOVENTA Y CINCO MIL NOVECIENTOS Y 00/100 SOLES",
+        "moneda": "SOLES"
+    },
+    "anexosPresentados": [
+        {
+            "numero": "01",
+            "nombre": "DECLARACION JURADA DE DATOS DEL POSTOR EN CONSORCIO",
+            "firmadoPor": "REPRESENTANTE_COMUN",
+            "variante": "CONSORCIO"
+        },
+        {
+            "numero": "02",
+            "nombre": "PACTO DE INTEGRIDAD",
+            "firmadoPor": "CADA_INTEGRANTE",
+            "copias": 2,
+            "variante": "PERSONA_JURIDICA"
+        },
+        {
+            "numero": "03",
+            "nombre": "DECLARACION JURADA",
+            "firmadoPor": "CADA_INTEGRANTE_Y_REPRESENTANTE_COMUN",
+            "copias": 3
+        },
+        {
+            "numero": "04",
+            "nombre": "PROMESA DE CONSORCIO",
+            "firmadoPor": "TODOS_LOS_INTEGRANTES"
+        },
+        {
+            "numero": "06",
+            "nombre": "PRECIO DE LA OFERTA",
+            "firmadoPor": "REPRESENTANTE_COMUN"
+        }
+    ],
+    "formatoAprendido": {
+        "fechaFormato": "(DD) días del mes (MES) de YYYY",
+        "fechaEjemplo": "(21) días del mes (OCTUBRE) de 2025",
+        "encabezadoEstandar": "Señores\nEVALUADORES\n[NOMENCLATURA]\nPresente.-",
+        "firmaRepresentante": "___________________________________\n[NOMBRE COMPLETO]\n[TIPO DOC] N°[NUMERO]\n[CARGO]",
+        "mypeCheckbox": "SI [X]  NO [ ]",
+        "estructuraPrimerparrafo": "El que se suscribe, [NOMBRE], postor y/o representante legal de [EMPRESA], identificado con [TIPO DOC] N°[NUMERO], DECLARO BAJO JURAMENTO que..."
+    }
+}

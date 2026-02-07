@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Requisitos - Concurso Público N° 001-2026-MDHs/CS-1</title>
+    <style>
+        @page {
+            margin: 1.5cm;
+            size: A4;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1a5276;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .logo-placeholder {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #1a5276;
+        }
+        h1 {
+            font-size: 14pt;
+            color: #1a5276;
+            margin: 10px 0;
+        }
+        h2 {
+            font-size: 12pt;
+            color: #fff;
+            background-color: #1a5276;
+            padding: 8px 12px;
+            margin: 15px 0 10px 0;
+            border-radius: 4px;
+        }
+        h3 {
+            font-size: 11pt;
+            color: #1a5276;
+            margin: 10px 0 5px 0;
+            border-bottom: 1px solid #1a5276;
+            padding-bottom: 3px;
+        }
+        .info-box {
+            background-color: #eaf2f8;
+            border: 1px solid #1a5276;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .info-item {
+            margin: 5px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #1a5276;
+        }
+        .value {
+            color: #333;
+        }
+        .highlight {
+            background-color: #f9e79f;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 9pt;
+        }
+        th {
+            background-color: #2980b9;
+            color: white;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #1a5276;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        .status-column {
+            width: 80px;
+            text-align: center;
+        }
+        .nota-column {
+            width: 120px;
+        }
+        .categoria {
+            background-color: #d5dbdb;
+            font-weight: bold;
+            color: #1a5276;
+        }
+        .important {
+            color: #c0392b;
+            font-weight: bold;
+        }
+        .warning-box {
+            background-color: #fdebd0;
+            border-left: 4px solid #e67e22;
+            padding: 10px;
+            margin: 15px 0;
+            font-size: 9pt;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 8pt;
+            color: #666;
+            text-align: center;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 3px 0;
+        }
+        .personal-clave {
+            background-color: #e8f6f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-placeholder">📋 CHECKLIST DE REQUISITOS</div>
+        <h1>CONCURSO PÚBLICO PARA CONSULTORÍA DE OBRA</h1>
+        <h1>N° 001-2026-MDHs/CS-1</h1>
+        <p style="font-size: 9pt; color: #666;">Municipalidad Distrital de Huachis - Primera Convocatoria</p>
+    </div>
+
+    <div class="info-box">
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">OBJETO:</span>
+                <span class="value">Supervisión de la Obra: "Mejoramiento y Ampliación del Servicio de Educación Secundaria en la I.E. Juan Velasco Alvarado - Huachis"</span>
+            </div>
+            <div class="info-item">
+                <span class="label">CUI:</span>
+                <span class="value highlight">2625493</span>
+            </div>
+            <div class="info-item">
+                <span class="label">CUANTÍA:</span>
+                <span class="value highlight">S/ 786,750.05</span>
+            </div>
+            <div class="info-item">
+                <span class="label">OFERTA MÍNIMA (90%):</span>
+                <span class="value highlight">S/ 708,075.05</span>
+            </div>
+            <div class="info-item">
+                <span class="label">PONDERACIÓN:</span>
+                <span class="value">Técnica 80% / Económica 20%</span>
+            </div>
+            <div class="info-item">
+                <span class="label">PUNTAJE MÍNIMO TÉCNICO:</span>
+                <span class="value highlight">70 puntos</span>
+            </div>
+        </div>
+    </div>
+
+    <h2>1️⃣ DOCUMENTOS PARA ADMISIÓN DE LA OFERTA</h2>
+    <p style="font-size: 9pt; color: #c0392b;">⚠️ OBLIGATORIOS - Sin estos documentos la oferta NO será admitida</p>
+
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>DOCUMENTO REQUERIDO</th>
+            <th>ANEXO</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Declaración Jurada de Datos del Postor</td>
+            <td>Anexo N° 1</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Pacto de Integridad</td>
+            <td>Anexo N° 2</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="checkbox"></span>Documento que acredite representación (Vigencia de Poder / DNI / CE)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><span class="checkbox"></span>Declaración Jurada de veracidad y no impedimento</td>
+            <td>Anexo N° 3</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><span class="checkbox"></span>Promesa de Consorcio (si aplica - firmas digitales o legalizadas)</td>
+            <td>Anexo N° 4</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><span class="checkbox"></span>Documentación de desafectación de impedimento (si aplica)</td>
+            <td>Anexo N° 5</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <h2>2️⃣ REQUISITOS DE CALIFICACIÓN</h2>
+
+    <h3>A. CAPACIDAD LEGAL</h3>
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>REQUISITO</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>RNP vigente como Consultor de Obras en la especialidad requerida</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Representación legal / Vigencia de poder</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <h3>B. EXPERIENCIA DEL POSTOR EN LA ESPECIALIDAD</h3>
+    <div class="warning-box">
+        <strong>IMPORTANTE:</strong> Verificar en el TDR el monto mínimo de experiencia requerida y la especialidad específica. 
+        La experiencia se acredita con contratos, conformidades, constancias o certificados con antigüedad máxima de 25 años.
+    </div>
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>REQUISITO</th>
+            <th>ANEXO</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Declaración de Experiencia del Postor en la Especialidad</td>
+            <td>Anexo N° 10</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Contratos y/o conformidades que sustentan la experiencia</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="checkbox"></span>DJ por reorganización societaria (si aplica)</td>
+            <td>Anexo N° 11</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h3>C. PERSONAL CLAVE - CALIFICACIONES Y EXPERIENCIA</h3>
+    <div class="warning-box">
+        <strong>PERSONAL CLAVE REQUERIDO:</strong> Verificar los años de experiencia específica mínima en el TDR para cada profesional.
+    </div>
+
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>CARGO / ESPECIALISTA</th>
+            <th>EXP. MIN</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">NOMBRE PROPUESTO</th>
+        </tr>
+        <tr class="personal-clave">
+            <td>1</td>
+            <td><span class="checkbox"></span><strong>SUPERVISOR DE OBRA (Jefe de Supervisión)</strong>
+                <br>• Ingeniero Civil o Arquitecto titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>2</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN ARQUITECTURA</strong>
+                <br>• Arquitecto titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>3</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN ESTRUCTURAS</strong>
+                <br>• Ingeniero Civil titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>4</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN INSTALACIONES SANITARIAS</strong>
+                <br>• Ingeniero Sanitario o Ingeniero Civil titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>5</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN INSTALACIONES ELÉCTRICAS</strong>
+                <br>• Ingeniero Electricista o Mecánico Electricista titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>6</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN CALIDAD</strong>
+                <br>• Ingeniero con especialización en calidad, titulado y colegiado habilitado
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="personal-clave">
+            <td>7</td>
+            <td><span class="checkbox"></span><strong>ESPECIALISTA EN SEGURIDAD Y MEDIO AMBIENTE</strong>
+                <br>• Ingeniero con especialización en seguridad y/o medio ambiente
+            </td>
+            <td>_____ años</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>DOCUMENTO DE ACREDITACIÓN POR CADA PROFESIONAL</th>
+            <th>ANEXO</th>
+            <th class="status-column">TIENE ✓</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Declaración de Experiencia y Calificaciones del Personal Clave</td>
+            <td>Anexo N° 15</td>
+            <td class="status-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Copia de título profesional (verificable en SUNEDU o MINEDU)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="checkbox"></span>Constancia de habilitación del colegio profesional</td>
+            <td>-</td>
+            <td class="status-column"></td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><span class="checkbox"></span>Contratos/constancias/certificados de experiencia</td>
+            <td>-</td>
+            <td class="status-column"></td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2>3️⃣ FACTORES DE EVALUACIÓN TÉCNICA (100 puntos)</h2>
+    <p style="font-size: 9pt; background-color: #fdebd0; padding: 8px; border-radius: 4px;">
+        <strong>PUNTAJE MÍNIMO REQUERIDO: 70 PUNTOS</strong> para pasar a evaluación económica
+    </p>
+
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>FACTOR DE EVALUACIÓN</th>
+            <th style="width: 60px;">PUNTAJE</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr class="categoria">
+            <td colspan="5">A. EXPERIENCIA ESPECÍFICA ADICIONAL DEL PERSONAL CLAVE</td>
+        </tr>
+        <tr>
+            <td>A.1</td>
+            <td>
+                <span class="checkbox"></span>Más del 80% del personal clave supera experiencia mínima en +1 año
+            </td>
+            <td style="text-align: center;"><strong>80 pts</strong></td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>A.2</td>
+            <td>
+                <span class="checkbox"></span>Más del 50% hasta 80% del personal clave supera experiencia en +1 año
+            </td>
+            <td style="text-align: center;">70 pts</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>A.3</td>
+            <td>
+                <span class="checkbox"></span>Más del 30% hasta 50% del personal clave supera experiencia en +1 año
+            </td>
+            <td style="text-align: center;">60 pts</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="categoria">
+            <td colspan="5">B. SOSTENIBILIDAD AMBIENTAL</td>
+        </tr>
+        <tr>
+            <td>B.1</td>
+            <td>
+                <span class="checkbox"></span>Certificación ISO 14001 o equivalente (vigente, para consultoría de obra)
+            </td>
+            <td style="text-align: center;"><strong>05 pts</strong></td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="categoria">
+            <td colspan="5">C. SOSTENIBILIDAD SOCIAL</td>
+        </tr>
+        <tr>
+            <td>C.1</td>
+            <td>
+                <span class="checkbox"></span>Certificación o prácticas de responsabilidad social
+            </td>
+            <td style="text-align: center;"><strong>05 pts</strong></td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="categoria">
+            <td colspan="5">F. INTEGRIDAD EN LA CONTRATACIÓN PÚBLICA</td>
+        </tr>
+        <tr>
+            <td>F.1</td>
+            <td>
+                <span class="checkbox"></span>Certificación ISO 37001 (Sistema de Gestión Antisoborno) vigente
+            </td>
+            <td style="text-align: center;"><strong>05 pts</strong></td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr class="categoria">
+            <td colspan="5">I. GESTIÓN DE CALIDAD</td>
+        </tr>
+        <tr>
+            <td>I.1</td>
+            <td>
+                <span class="checkbox"></span>Certificación ISO 9001:2015 vigente (alcance en consultoría de obras)
+            </td>
+            <td style="text-align: center;"><strong>05 pts</strong></td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr style="background-color: #d5dbdb; font-weight: bold;">
+            <td colspan="2" style="text-align: right;">TOTAL MÁXIMO POSIBLE:</td>
+            <td style="text-align: center;">100 pts</td>
+            <td colspan="2"></td>
+        </tr>
+    </table>
+
+    <h2>4️⃣ OFERTA ECONÓMICA</h2>
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>DOCUMENTO REQUERIDO</th>
+            <th>ANEXO</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Precio de la Oferta (según modalidad de pago)</td>
+            <td>Anexo N° 6</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>DJ Exoneración IGV (si aplica - Ley 27037 Amazonía)</td>
+            <td>Anexo N° 12</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>⚠️ LÍMITE DE OFERTA ECONÓMICA:</strong>
+        <ul>
+            <li>Monto mínimo permitido (90% de cuantía): <strong class="highlight">S/ 708,075.05</strong></li>
+            <li>Ofertas menores al 90% serán DESCALIFICADAS</li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>5️⃣ BONIFICACIONES OPCIONALES</h2>
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>BONIFICACIÓN</th>
+            <th>ANEXO</th>
+            <th>APLICA</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Bonificación 10% por servicios prestados fuera de Lima/Callao (cuantía ≤ S/200,000)</td>
+            <td>Anexo N° 13</td>
+            <td style="text-align: center;">❌ NO APLICA<br>(cuantía > S/200,000)</td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Bonificación 5% por condición MYPE (modalidad abreviada)</td>
+            <td>Anexo N° 17</td>
+            <td style="text-align: center;"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <h2>6️⃣ DOCUMENTOS PARA PERFECCIONAMIENTO DEL CONTRATO</h2>
+    <p style="font-size: 9pt; color: #666;">Solo después de ganar la Buena Pro - Plazo: 8 días hábiles desde consentimiento</p>
+
+    <table>
+        <tr>
+            <th style="width: 40px;">N°</th>
+            <th>DOCUMENTO REQUERIDO</th>
+            <th>ANEXO</th>
+            <th class="status-column">TIENE ✓</th>
+            <th class="nota-column">OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="checkbox"></span>Garantía de Fiel Cumplimiento (10% del contrato) o Autorización de Retención</td>
+            <td>Anexo N° 7</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="checkbox"></span>Contrato de Consorcio con firmas legalizadas (si aplica)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="checkbox"></span>Código de Cuenta Interbancaria (CCI)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><span class="checkbox"></span>Vigencia de poder del representante legal</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><span class="checkbox"></span>Copia DNI del representante legal / común</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><span class="checkbox"></span>Autorización de notificaciones por correo electrónico</td>
+            <td>Anexo N° 8</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td><span class="checkbox"></span>Desglose de estructura de costos y gastos generales</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td><span class="checkbox"></span>Elección de Institución Arbitral</td>
+            <td>Anexo N° 9</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td><span class="checkbox"></span>Documentos de equipamiento e infraestructura estratégica (si aplica)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td><span class="checkbox"></span>Documentación de experiencia del personal clave (no evaluada como factor)</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>11</td>
+            <td><span class="checkbox"></span>Copia diplomas si no son verificables en SUNEDU/MINEDU</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>12</td>
+            <td><span class="checkbox"></span>Plan de Trabajo con memoria descriptiva</td>
+            <td>-</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>13</td>
+            <td><span class="checkbox"></span>DJ Actualización de Desafectación de Impedimento (si aplica)</td>
+            <td>Anexo N° 14</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+        <tr>
+            <td>14</td>
+            <td><span class="checkbox"></span>DJ Inaplicación REDAM (si aplica)</td>
+            <td>Anexo N° 16</td>
+            <td class="status-column"></td>
+            <td class="nota-column"></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>📍 LUGAR DE PRESENTACIÓN:</strong><br>
+        Mesa de Partes: Jr. Condorcanqui Lote 36 Centro Huachis (misma Plaza Principal) - Ancash, Huari, Huachis<br>
+        <strong>Correo electrónico:</strong> abastemunihuachis@gmail.com
+    </div>
+
+    <h2>📊 RESUMEN DE CUMPLIMIENTO</h2>
+    <table>
+        <tr>
+            <th>SECCIÓN</th>
+            <th>ÍTEMS TOTALES</th>
+            <th>CUMPLE</th>
+            <th>PENDIENTE</th>
+            <th>OBSERVACIONES</th>
+        </tr>
+        <tr>
+            <td>1. Documentos de Admisión</td>
+            <td style="text-align: center;">6</td>
+            <td style="text-align: center;"></td>
+            <td style="text-align: center;"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>2. Requisitos de Calificación</td>
+            <td style="text-align: center;">Variable</td>
+            <td style="text-align: center;"></td>
+            <td style="text-align: center;"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>3. Personal Clave (7 especialistas)</td>
+            <td style="text-align: center;">7</td>
+            <td style="text-align: center;"></td>
+            <td style="text-align: center;"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>4. Factores de Evaluación</td>
+            <td style="text-align: center;">5 categorías</td>
+            <td style="text-align: center;"></td>
+            <td style="text-align: center;"></td>
+            <td>Puntaje esperado: ___/100</td>
+        </tr>
+        <tr>
+            <td>5. Oferta Económica</td>
+            <td style="text-align: center;">2</td>
+            <td style="text-align: center;"></td>
+            <td style="text-align: center;"></td>
+            <td>Monto propuesto: S/ _____</td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 20px; padding: 15px; background-color: #eaf2f8; border-radius: 5px;">
+        <strong>NOTAS ADICIONALES:</strong>
+        <p style="margin: 10px 0;">_______________________________________________________________________________</p>
+        <p style="margin: 10px 0;">_______________________________________________________________________________</p>
+        <p style="margin: 10px 0;">_______________________________________________________________________________</p>
+    </div>
+
+    <div class="footer">
+        <p>Checklist generado para: <strong>CLIENTE ALDO</strong></p>
+        <p>Fecha de elaboración: 06 de febrero de 2026</p>
+        <p>⚠️ Este checklist es una guía de apoyo. Siempre verificar contra las Bases Integradas oficiales publicadas en SEACE.</p>
+    </div>
+</body>
+</html>

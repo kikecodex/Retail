@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Bases - Concurso Público N° 001-2026-MDHs/CS-1</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header .proceso {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: rgba(51, 65, 85, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .info-card .label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .info-card .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-top: 4px;
+        }
+
+        .capitulo {
+            margin-bottom: 25px;
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .capitulo-header {
+            padding: 15px 20px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .capitulo-header .contador {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .capitulo-ii .capitulo-header {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+        }
+
+        .capitulo-iii .capitulo-header {
+            background: linear-gradient(135deg, #059669, #10b981);
+        }
+
+        .capitulo-iv .capitulo-header {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+        }
+
+        .seccion {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .seccion-titulo {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #c084fc;
+            margin-bottom: 10px;
+        }
+
+        .subseccion {
+            margin-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .subseccion-titulo {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .item:hover {
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .item.checked {
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        .item.checked .item-texto {
+            color: #6b7280;
+            text-decoration: line-through;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border: 2px solid #64748b;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        .item.checked .checkbox {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+
+        .checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+        }
+
+        .item.checked .checkbox::after {
+            opacity: 1;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-texto {
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .item-anexo {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .item-puntaje {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fbbf24;
+            white-space: nowrap;
+        }
+
+        .item-nota {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .personal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .tabla-puntajes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .tabla-puntajes th,
+        .tabla-puntajes td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .tabla-puntajes th {
+            background: rgba(51, 65, 85, 0.6);
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .tabla-puntajes .puntaje {
+            text-align: center;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .progreso {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 12px;
+        }
+
+        .progreso-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .progreso-barra {
+            height: 10px;
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progreso-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #c084fc);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .btn-exportar {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-exportar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .nota-importante {
+            background: rgba(245, 158, 11, 0.15);
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 0.85rem;
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: #1f2937;
+                padding: 0;
+            }
+
+            .container {
+                background: white;
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .header h1 {
+                background: none;
+                -webkit-text-fill-color: #4f46e5;
+            }
+
+            .capitulo {
+                break-inside: avoid;
+            }
+
+            .btn-exportar {
+                display: none;
+            }
+
+            .item {
+                background: #f8fafc;
+            }
+
+            .item.checked {
+                background: #dcfce7;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 CHECKLIST DE BASES DE LICITACIÓN</h1>
+            <p class="proceso">CONCURSO PÚBLICO N° 001-2026-MDHs/CS-1 | MUNICIPALIDAD DISTRITAL DE HUACHIS</p>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Objeto</div>
+                <div class="value">Supervisión de Obra I.E. Juan Velasco Alvarado</div>
+            </div>
+            <div class="info-card">
+                <div class="label">CUI</div>
+                <div class="value">2625493</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Cuantía</div>
+                <div class="value">S/ 786,750.05</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Oferta Mínima (90%)</div>
+                <div class="value">S/ 708,075.05</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Ponderación</div>
+                <div class="value">80% Técnica / 20% Económica</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Puntaje Mínimo Técnico</div>
+                <div class="value">70 puntos</div>
+            </div>
+        </div>
+
+        <div class="progreso">
+            <div class="progreso-header"><span>📊 Progreso del Checklist</span><span id="progreso-texto">0/0 (0%)</span>
+            </div>
+            <div class="progreso-barra">
+                <div class="progreso-fill" id="progreso-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- CAPÍTULO II -->
+        <div class="capitulo capitulo-ii">
+            <div class="capitulo-header"><span>📑 CAPÍTULO II: DEL PROCEDIMIENTO DE SELECCIÓN</span><span
+                    class="contador" id="contador-cap2">0/0</span></div>
+            <div class="seccion">
+                <div class="seccion-titulo">2.2 CONTENIDO DE LAS OFERTAS</div>
+                <div class="subseccion">
+                    <div class="subseccion-titulo">2.2.1.1 Documentos para la Admisión de la Oferta</div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">A) Declaración Jurada de datos del postor</div><span
+                                class="item-anexo">Anexo N° 1</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">B) Pacto de Integridad</div><span class="item-anexo">Anexo N°
+                                2</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">C) Documento que acredite la representación (Vigencia de poder o
+                                DNI)</div>
+                            <div class="item-nota">PJ: Certificado vigencia de poder | PN: Copia DNI</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">D) Declaración jurada de veracidad y no impedimento Art. 33</div>
+                            <span class="item-anexo">Anexo N° 3</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">E) Promesa de consorcio con firmas digitales/legalizadas (si aplica)
+                            </div><span class="item-anexo">Anexo N° 4</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">F) Documentación de desafectación del impedimento (si aplica)</div>
+                            <span class="item-anexo">Anexo N° 5</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">G) Oferta Económica con estructura de costos</div><span
+                                class="item-anexo">Anexo N° 6</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="subseccion">
+                    <div class="subseccion-titulo">2.2.1.2 Documentos para Acreditar Requisitos de Calificación</div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Documentos según Capítulo III (ver siguiente sección)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="subseccion">
+                    <div class="subseccion-titulo">2.2.2 Documentación de Presentación Facultativa</div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Documentos para Factores de Evaluación Capítulo IV</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">DJ Exoneración IGV - Ley Amazonía (si aplica)</div><span
+                                class="item-anexo">Anexo N° 12</span>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Solicitud Bonificación 10% fuera Lima/Callao (si ≤S/200,000)</div>
+                            <span class="item-anexo">Anexo N° 13</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAPÍTULO III -->
+        <div class="capitulo capitulo-iii">
+            <div class="capitulo-header"><span>📋 CAPÍTULO III: REQUISITOS DE CALIFICACIÓN</span><span class="contador"
+                    id="contador-cap3">0/0</span></div>
+            <div class="seccion">
+                <div class="seccion-titulo">3.1 EXPERIENCIA DEL POSTOR EN LA ESPECIALIDAD</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Acreditación de experiencia en consultoría de obra (supervisión)</div>
+                        <div class="item-nota">Contratos+conformidad, constancias, certificados</div>
+                    </div>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">3.2 CALIFICACIÓN DEL PERSONAL CLAVE</div>
+                <div class="nota-importante">⚠️ Títulos verificados en SUNEDU/MINEDU. Si no aparece, presentar copia
+                    diploma.</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Declaración Jurada de Personal Clave propuesto</div><span
+                            class="item-anexo">Anexo N° 15</span>
+                    </div>
+                </div>
+                <div class="personal-grid">
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">1️⃣ Supervisor de Obra / Jefe de Supervisión</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">2️⃣ Especialista en Arquitectura</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">3️⃣ Especialista en Estructuras</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">4️⃣ Especialista en Instalaciones Sanitarias</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">5️⃣ Especialista en Instalaciones Eléctricas</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">6️⃣ Especialista en Calidad</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">7️⃣ Especialista en Seguridad y Medio Ambiente</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">3.3 EXPERIENCIA DEL PERSONAL CLAVE</div>
+                <div class="nota-importante">⚠️ Documentos: nombres, cargo, fechas día/mes/año, entidad emisora, firma.
+                    Antigüedad máx: 25 años.</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Documentación de experiencia de cada profesional</div>
+                    </div>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">3.4 EQUIPAMIENTO ESTRATÉGICO</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Docs de equipamiento (propiedad, posesión, alquiler, compromiso)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAPÍTULO IV -->
+        <div class="capitulo capitulo-iv">
+            <div class="capitulo-header"><span>⚖️ CAPÍTULO IV: FACTORES DE EVALUACIÓN (100 pts)</span><span
+                    class="contador" id="contador-cap4">0/0</span></div>
+            <div class="seccion">
+                <div class="seccion-titulo">RESUMEN DE FACTORES (Mínimo técnico: 70 pts)</div>
+                <table class="tabla-puntajes">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Puntaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>A. Experiencia Adicional Personal Clave</td>
+                            <td class="puntaje">80 pts</td>
+                        </tr>
+                        <tr>
+                            <td>B. Sostenibilidad Ambiental (ISO 14001)</td>
+                            <td class="puntaje">10 pts</td>
+                        </tr>
+                        <tr>
+                            <td>C. Sostenibilidad Social</td>
+                            <td class="puntaje">5 pts</td>
+                        </tr>
+                        <tr>
+                            <td>F. Integridad Antisoborno (ISO 37001)</td>
+                            <td class="puntaje">5 pts</td>
+                        </tr>
+                        <tr style="background: rgba(139, 92, 246, 0.2);">
+                            <td><strong>TOTAL</strong></td>
+                            <td class="puntaje"><strong>100 pts</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">A. EXPERIENCIA ADICIONAL PERSONAL CLAVE (80 pts)</div>
+                <div class="nota-importante">📊 Metodología: >80% supera +1 año = 80pts | >50-80% = 70pts | >30-50% =
+                    60pts</div>
+                <div class="personal-grid">
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Supervisor: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Arquitectura: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Estructuras: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Instalaciones Sanitarias: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Instalaciones Eléctricas: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Calidad: +1 año adicional</div>
+                        </div>
+                    </div>
+                    <div class="item" onclick="toggleItem(this)">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-texto">Seguridad y MA: +1 año adicional</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">B. SOSTENIBILIDAD AMBIENTAL (10 pts)</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Certificación ISO 14001 o equivalente (vigente)</div>
+                    </div><span class="item-puntaje">10 pts</span>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">F. INTEGRIDAD ANTISOBORNO (5 pts)</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Certificación ISO 37001 o NTP equivalente (vigente)</div>
+                    </div><span class="item-puntaje">5 pts</span>
+                </div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">OFERTA ECONÓMICA</div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Oferta Económica preparada (mín S/ 708,075.05)</div><span
+                            class="item-anexo">Anexo N° 6</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERFECCIONAMIENTO -->
+        <div class="capitulo" style="background: rgba(100, 116, 139, 0.3);">
+            <div class="capitulo-header" style="background: linear-gradient(135deg, #475569, #64748b);"><span>📝
+                    DOCUMENTOS PARA CONTRATO (post-adjudicación)</span></div>
+            <div class="seccion">
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Garantía fiel cumplimiento (10%)</div><span class="item-anexo">Anexo N°
+                            7</span>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Contrato consorcio firmas legalizadas (si aplica)</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Código CCI</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Vigencia poder + DNI representante</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Autorización notificaciones email</div><span class="item-anexo">Anexo N°
+                            8</span>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Desglose estructura costos</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Institución Arbitral</div><span class="item-anexo">Anexo N° 9</span>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Docs equipamiento estratégico</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Acreditación experiencia personal clave</div>
+                    </div>
+                </div>
+                <div class="item" onclick="toggleItem(this)">
+                    <div class="checkbox"></div>
+                    <div class="item-content">
+                        <div class="item-texto">Plan de trabajo con memoria descriptiva</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-exportar" onclick="window.print()">📥 Descargar como PDF (Ctrl+P)</button>
+        <p style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #64748b;">Mister Propuestas | <span
+                id="fecha"></span></p>
+    </div>
+
+    <script>
+        document.getElementById('fecha').textContent = new Date().toLocaleDateString('es-PE');
+        function toggleItem(e) { e.classList.toggle('checked'); actualizarProgreso(); }
+        function actualizarProgreso() {
+            const items = document.querySelectorAll('.item');
+            const checked = document.querySelectorAll('.item.checked').length;
+            const pct = items.length > 0 ? Math.round((checked / items.length) * 100) : 0;
+            document.getElementById('progreso-texto').textContent = `${checked}/${items.length} (${pct}%)`;
+            document.getElementById('progreso-fill').style.width = `${pct}%`;
+            ['capitulo-ii', 'capitulo-iii', 'capitulo-iv'].forEach((c, i) => {
+                const cap = document.querySelector(`.${c}`);
+                if (cap) {
+                    const t = cap.querySelectorAll('.item').length;
+                    const ch = cap.querySelectorAll('.item.checked').length;
+                    document.getElementById(`contador-cap${i + 2}`).textContent = `${ch}/${t}`;
+                }
+            });
+        }
+        actualizarProgreso();
+    </script>
+</body>
+
+</html>

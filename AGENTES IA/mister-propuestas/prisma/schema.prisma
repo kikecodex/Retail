@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============== USERS & AUTH ==============
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  projects      Project[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============== CORE MODELS ==============
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("draft")
+  
+  basesFileUrl  String?
+  basesFileName String?
+  
+  requisitos  Json?
+  perfiles    Json?
+  
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anexos       Anexo[]
+  experiencias Experiencia[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Anexo {
+  id        String  @id @default(cuid())
+  nombre    String
+  tipo      String?
+  
+  templateUrl String
+  filledUrl   String?
+  
+  status String @default("pending")
+  
+  campos Json?
+  
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Experiencia {
+  id String @id @default(cuid())
+  
+  fileUrl  String
+  fileName String
+  fileType String
+  
+  datosPersonales Json?
+  formacion       Json?
+  experiencias    Json?
+  certificaciones Json?
+  
+  resumen String?
+  
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+// ============== RAG / LEARNING SYSTEM ==============
+
+model PropuestaHistorica {
+  id          String   @id @default(cuid())
+  
+  // Módulo vertical: aislamiento de datos por sector
+  modulo      String   @default("consultoria") // "supervision" | "consultoria" | "obras"
+  
+  // Contenido de la propuesta
+  contenido   String   @db.Text
+  tipo        String   // "tecnica" | "economica" | "anexo_01" | "anexo_02" | "anexo_03"
+  
+  // Resultado de la propuesta
+  exitosa     Boolean  @default(false)
+  calificacion Int?    // 1-5 estrellas
+  notas       String?  @db.Text
+  
+  // Contexto de la licitación
+  tipoLicitacion String?  // "CONCURSO PUBLICO", "ADJUDICACION SIMPLIFICADA", etc.
+  entidad        String?
+  montoReferencial Float?
+  
+  // Vector embedding para búsqueda semántica (768 dims de Gemini text-embedding-004)
+  // Almacenado como Json[] para compatibilidad con Prisma Postgres local
+  embedding   Json?
+  
+  // Relaciones
+  projectId   String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([modulo])
+  @@index([tipo])
+  @@index([exitosa])
+  @@index([tipoLicitacion])
+  @@map("propuestas_historicas")
+}
+
+model PatronExito {
+  id          String   @id @default(cuid())
+  
+  // Módulo vertical: aislamiento de patrones por sector
+  modulo      String   @default("consultoria") // "supervision" | "consultoria" | "obras"
+  
+  // Tipo de patrón detectado
+  tipo        String   // "experiencia_especifica", "certificacion_vigente", "titulo_profesional", etc.
+  descripcion String   @db.Text
+  
+  // Frecuencia de aparición en propuestas exitosas
+  frecuencia  Int      @default(1)
+  
+  // Vector embedding
+  // Almacenado como Json para compatibilidad
+  embedding   Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([modulo, tipo])
+  @@index([modulo])
+  @@map("patrones_exito")
+}
