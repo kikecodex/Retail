@@ -752,40 +752,117 @@ def _page_proctor(p, proctor, pn, tp):
     r = proctor.get('results', proctor)
     mdd = r.get('mdd', 0)
     omc = r.get('omc', 0)
+    method = r.get('method', 'Proctor Modificado')
+    energy = r.get('energy', '56000 lb-ft/ft³')
+    mold_volume = r.get('mold_volume_cm3', 944)
+    mold_weight = r.get('mold_weight_g', 4180)
+    layers = r.get('layers', 5)
+    blows = r.get('blows_per_layer', 25)
+    gs = r.get('gs', 2.65)
     points = r.get('points', r.get('compaction_points', []))
-    
+
+    # Detailed point rows
     pts_rows = ''
     for i, pt in enumerate(points):
         w = pt.get('moisture_percent', pt.get('w', 0))
         dd = pt.get('dry_density', pt.get('dd', 0))
-        pts_rows += f'''<tr class="border-b border-gray-300">
-            <td class="p-1 border-r border-black">{i+1}</td>
-            <td class="p-1 border-r border-black">{w:.2f}</td>
-            <td class="p-1 border-r border-black">{dd:.3f}</td>
+        wm = pt.get('wet_weight_mold', 0)
+        wms = pt.get('wet_weight_soil', round(wm - mold_weight, 1) if wm else 0)
+        vol = pt.get('volume_cm3', mold_volume)
+        wet_density = round(wms / vol, 3) if vol > 0 and wms > 0 else pt.get('wet_density', 0)
+        # Moisture containers
+        tare_id = pt.get('tare_id', f'T-{i+1}')
+        wet_tare = pt.get('wet_tare', 0)
+        dry_tare = pt.get('dry_tare', 0)
+        tare = pt.get('tare', 0)
+        water = round(wet_tare - dry_tare, 2) if wet_tare and dry_tare else 0
+        solids = round(dry_tare - tare, 2) if dry_tare and tare else 0
+
+        pts_rows += f'''<tr class="border-b border-gray-300 text-center">
+            <td class="p-1 border-r border-black font-bold">{i+1}</td>
+            <td class="p-1 border-r border-black">{wm:.1f}</td>
+            <td class="p-1 border-r border-black">{wms:.1f}</td>
+            <td class="p-1 border-r border-black">{wet_density:.3f}</td>
+            <td class="p-1 border-r border-black">{tare_id}</td>
+            <td class="p-1 border-r border-black">{wet_tare:.2f}</td>
+            <td class="p-1 border-r border-black">{dry_tare:.2f}</td>
+            <td class="p-1 border-r border-black">{tare:.2f}</td>
+            <td class="p-1 border-r border-black">{water:.2f}</td>
+            <td class="p-1 border-r border-black">{solids:.2f}</td>
+            <td class="p-1 border-r border-black bg-blue-50">{w:.2f}</td>
+            <td class="p-1 bg-blue-50 font-bold">{dd:.3f}</td>
         </tr>'''
-    
+
+    # Zero air voids line (Gs)
+    zav_note = f'Gs = {gs}' if gs else ''
+
     return f'''
     <div class="a4-page" style="page-break-before: always;">
-        {_project_header(p, 'Ensayo de Compactación Proctor Modificado', '(ASTM D1557)', pn, tp)}
-        <div class="flex gap-4 mb-4">
-            <div class="w-1/2">
-                <table class="text-xs border border-black w-full text-center">
-                    <tr class="bg-gray-100 font-bold border-b border-black">
-                        <td class="p-1 border-r border-black">Punto</td>
-                        <td class="p-1 border-r border-black">Humedad (%)</td>
-                        <td class="p-1 border-r border-black">Densidad Seca (g/cm³)</td>
-                    </tr>
-                    {pts_rows}
-                </table>
-                <div class="border-2 border-black mt-4">
-                    <table class="w-full text-xs font-bold">
-                        <tr><td class="bg-gray-100 p-2 border-r border-black w-2/3">Densidad Máxima Seca (MDD)</td><td class="p-2 text-center">{mdd} g/cm³</td></tr>
-                        <tr><td class="bg-gray-100 p-2 border-r border-black border-t border-black">Humedad Óptima (OMC)</td><td class="p-2 text-center border-t border-black">{omc} %</td></tr>
+        {_project_header(p, 'Ensayo de Compactación Proctor Modificado', '(ASTM D1557 / MTC E-115)', pn, tp)}
+
+        <!-- Method Parameters -->
+        <table class="text-[9px] border-collapse border-2 border-black w-full mb-2">
+            <tr class="border-b border-gray-300">
+                <td class="p-1 border-r border-black text-right w-1/4">Método</td>
+                <td class="p-1 font-bold border-r border-black">{method}</td>
+                <td class="p-1 border-r border-black text-right w-1/4">Energía de Compact.</td>
+                <td class="p-1 font-bold">{energy}</td>
+            </tr>
+            <tr class="border-b border-gray-300">
+                <td class="p-1 border-r border-black text-right">Volumen del molde</td>
+                <td class="p-1 border-r border-black">{mold_volume} cm³</td>
+                <td class="p-1 border-r border-black text-right">Peso del molde</td>
+                <td class="p-1">{mold_weight} g</td>
+            </tr>
+            <tr class="border-b border-black">
+                <td class="p-1 border-r border-black text-right">N° de Capas</td>
+                <td class="p-1 border-r border-black">{layers}</td>
+                <td class="p-1 border-r border-black text-right">Golpes por capa</td>
+                <td class="p-1">{blows}</td>
+            </tr>
+        </table>
+
+        <!-- Data Table -->
+        <div class="section-title text-[10px]">DATOS DE COMPACTACIÓN</div>
+        <table class="text-[8px] border-collapse border-2 border-black w-full text-center mb-2">
+            <thead>
+                <tr class="bg-gray-100 border-b-2 border-black font-bold">
+                    <td class="p-1 border-r border-black" rowspan="2">Punto</td>
+                    <td class="p-1 border-r border-black" colspan="3">MUESTRA + MOLDE</td>
+                    <td class="p-1 border-r border-black" colspan="6">CONTENIDO DE HUMEDAD</td>
+                    <td class="p-1 border-r border-black bg-blue-50">w</td>
+                    <td class="p-1 bg-blue-50">γd</td>
+                </tr>
+                <tr class="bg-gray-50 border-b border-black text-[7px]">
+                    <td class="p-1 border-r border-black">Wm+m<br>(g)</td>
+                    <td class="p-1 border-r border-black">Wms<br>(g)</td>
+                    <td class="p-1 border-r border-black">γh<br>(g/cm³)</td>
+                    <td class="p-1 border-r border-black">Tarro</td>
+                    <td class="p-1 border-r border-black">Wh+t<br>(g)</td>
+                    <td class="p-1 border-r border-black">Ws+t<br>(g)</td>
+                    <td class="p-1 border-r border-black">Wt<br>(g)</td>
+                    <td class="p-1 border-r border-black">Ww<br>(g)</td>
+                    <td class="p-1 border-r border-black">Ws<br>(g)</td>
+                    <td class="p-1 border-r border-black bg-blue-50">(%)</td>
+                    <td class="p-1 bg-blue-50">(g/cm³)</td>
+                </tr>
+            </thead>
+            <tbody>{pts_rows}</tbody>
+        </table>
+
+        <!-- Results + Chart -->
+        <div class="flex gap-4">
+            <div class="w-2/5">
+                <div class="border-2 border-black">
+                    <table class="w-full text-[10px] font-bold">
+                        <tr class="border-b border-black"><td class="bg-gray-100 p-2 border-r border-black">Máxima Densidad Seca (MDD)</td><td class="p-2 text-center bg-blue-50 text-lg">{mdd} g/cm³</td></tr>
+                        <tr><td class="bg-gray-100 p-2 border-r border-black">Óptimo Cont. de Humedad (OCH)</td><td class="p-2 text-center bg-blue-50 text-lg">{omc} %</td></tr>
                     </table>
                 </div>
+                <div class="mt-2 text-[8px] text-gray-500 italic">{zav_note}</div>
             </div>
-            <div class="w-1/2 border border-black h-[400px] bg-white relative">
-                <div class="text-xs text-center font-bold pt-1">CURVA DE COMPACTACIÓN</div>
+            <div class="w-3/5 border border-black h-[300px] bg-white relative">
+                <div class="text-[9px] text-center font-bold pt-1">CURVA DE COMPACTACIÓN</div>
                 <canvas id="proctorChart"></canvas>
             </div>
         </div>
