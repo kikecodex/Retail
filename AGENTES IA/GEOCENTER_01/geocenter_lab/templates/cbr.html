@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+{% block header %}Capacidad Portante (Terzaghi){% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Capacidad Portante</h2>
+    <button onclick="document.getElementById('methodologyModalCBR').classList.remove('hidden')"
+        class="text-yellow-600 hover:text-yellow-800 text-sm font-semibold flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Metodología
+    </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+    <!-- LEFT: Input Panel -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-gray-700">📐 Parámetros del Suelo y Cimentación</h3>
+            <button onclick="calculateBearingCapacity()"
+                class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg shadow-md transition-all font-semibold flex items-center gap-2">
+                ⚡ Calcular
+            </button>
+        </div>
+
+        <div class="p-6 overflow-auto flex-1 space-y-6">
+            <!-- Soil Parameters -->
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                <h4 class="text-sm font-bold text-yellow-600 uppercase mb-3">Propiedades del Suelo</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Cohesión c
+                            (kg/cm²)</label>
+                        <input type="number" step="0.0001" id="cohesion" value="0.0563"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ángulo de Fricción φ
+                            (°)</label>
+                        <input type="number" step="0.01" id="frictionAngle" value="25.17"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Peso Unitario γ
+                            (g/cm³)</label>
+                        <input type="number" step="0.01" id="unitWeight" value="1.86"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo de Falla</label>
+                        <select id="failureMode"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 p-2 border">
+                            <option value="general">General</option>
+                            <option value="local">Local</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Foundation Parameters -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 class="text-sm font-bold text-gray-600 uppercase mb-3">Geometría de la Cimentación</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tipo de
+                            Cimentación</label>
+                        <select id="foundationType" class="w-full border-gray-300 rounded-lg shadow-sm p-2 border">
+                            <option value="square">Cuadrada</option>
+                            <option value="strip">Corrido (Strip)</option>
+                            <option value="circular">Circular</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Factor de Seguridad
+                            (FS)</label>
+                        <input type="number" step="0.1" id="factorOfSafety" value="3.0"
+                            class="w-full border-gray-300 rounded-lg shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ancho B (m)</label>
+                        <input type="number" step="0.1" id="foundationWidth" value="1.0"
+                            class="w-full border-gray-300 rounded-lg shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Largo L (m)</label>
+                        <input type="number" step="0.1" id="foundationLength" value="1.0"
+                            class="w-full border-gray-300 rounded-lg shadow-sm p-2 border">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Profundidad Df
+                            (m)</label>
+                        <input type="number" step="0.1" id="foundationDepth" value="1.0"
+                            class="w-full border-gray-300 rounded-lg shadow-sm p-2 border">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="flex flex-col gap-6 h-full">
+        <!-- Main Results -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-yellow-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Última (qu)</div>
+                <div class="text-3xl font-bold text-gray-800" id="res-qu">--</div>
+                <div class="text-xs text-gray-400">kg/cm²</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-green-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Admisible (qa)</div>
+                <div class="text-3xl font-bold text-green-700" id="res-qa">--</div>
+                <div class="text-xs text-gray-400">kg/cm²</div>
+            </div>
+        </div>
+
+        <!-- Bearing Capacity Factors -->
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-4">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">Factores de Capacidad Portante</h4>
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <div class="text-xs text-blue-400 font-bold">Nc</div>
+                    <div class="text-2xl font-mono font-bold text-blue-700" id="res-nc">--</div>
+                </div>
+                <div class="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                    <div class="text-xs text-purple-400 font-bold">Nq</div>
+                    <div class="text-2xl font-mono font-bold text-purple-700" id="res-nq">--</div>
+                </div>
+                <div class="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                    <div class="text-xs text-orange-400 font-bold">Nγ</div>
+                    <div class="text-2xl font-mono font-bold text-orange-700" id="res-ng">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Effective Parameters (for Local Shear) -->
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-4">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">Parámetros Efectivos</h4>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="flex justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-gray-500">c efectivo:</span>
+                    <span class="font-mono font-bold" id="res-ceff">--</span>
+                </div>
+                <div class="flex justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-gray-500">φ efectivo:</span>
+                    <span class="font-mono font-bold" id="res-phieff">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Results in t/m² -->
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-4">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">Resultados en t/m²</h4>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="flex justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-gray-500">qu (t/m²):</span>
+                    <span class="font-mono font-bold" id="res-qu-tm2">--</span>
+                </div>
+                <div class="flex justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-gray-500">qa (t/m²):</span>
+                    <span class="font-mono font-bold" id="res-qa-tm2">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation Panel -->
+        <div id="validationPanel" class="bg-white rounded-xl shadow border border-gray-100 p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="text-sm font-bold text-gray-500 uppercase">📊 Validación c, φ vs CARTILLA</h4>
+                <select id="sucs-select" class="text-sm border rounded px-2 py-1" onchange="validateAgainstSUCS()">
+                    <option value="">-- Seleccionar Suelo --</option>
+                    <option value="SM">SM - Arena Limosa</option>
+                    <option value="ML">ML - Limo</option>
+                    <option value="SC">SC - Arena Arcillosa</option>
+                    <option value="CL">CL - Arcilla Baja Plasticidad</option>
+                    <option value="GM">GM - Grava Limosa</option>
+                    <option value="GC">GC - Grava Arcillosa</option>
+                    <option value="GW">GW - Grava Bien Graduada</option>
+                    <option value="SW">SW - Arena Bien Graduada</option>
+                    <option value="MH">MH - Limo Elástico</option>
+                    <option value="CH">CH - Arcilla Alta Plasticidad</option>
+                </select>
+            </div>
+            <div id="validation-results" class="space-y-2 text-sm">
+                <p class="text-gray-500 italic">Los valores c y φ se validarán contra los rangos de la CARTILLA</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Methodology Modal -->
+<div id="methodologyModalCBR"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+        <div class="bg-yellow-600 text-white p-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold">📖 Metodología: Capacidad Portante (Terzaghi 1943)</h2>
+            <button onclick="document.getElementById('methodologyModalCBR').classList.add('hidden')"
+                class="text-white hover:bg-yellow-700 rounded-full p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto max-h-[70vh] space-y-6">
+            <!-- Norma -->
+            <section class="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
+                <h3 class="font-bold text-yellow-800 mb-2">📋 Referencia</h3>
+                <p class="text-yellow-900 font-medium">Terzaghi, K. (1943). Theoretical Soil Mechanics</p>
+                <p class="text-sm text-yellow-700 mt-1">Método clásico para calcular la capacidad portante de
+                    cimentaciones superficiales.</p>
+            </section>
+
+            <!-- Fórmula General -->
+            <section>
+                <h3 class="font-bold text-gray-800 mb-3">📐 Fórmula General (Corrido/Strip)</h3>
+                <div class="bg-gray-100 p-4 rounded-lg text-center">
+                    <p class="font-mono text-lg font-bold text-gray-800">qu = c·Nc + q·Nq + 0.5·γ·B·Nγ</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs">
+                    <div class="bg-blue-50 p-2 rounded text-center"><strong>c</strong> = Cohesión</div>
+                    <div class="bg-purple-50 p-2 rounded text-center"><strong>q</strong> = γ·Df (sobrecarga)</div>
+                    <div class="bg-green-50 p-2 rounded text-center"><strong>γ</strong> = Peso unitario</div>
+                    <div class="bg-orange-50 p-2 rounded text-center"><strong>B</strong> = Ancho cimentación</div>
+                </div>
+            </section>
+
+            <!-- Factores Nc, Nq, Nγ -->
+            <section>
+                <h3 class="font-bold text-gray-800 mb-3">🔢 Factores de Capacidad Portante</h3>
+                <div class="space-y-3">
+                    <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <p class="font-bold text-blue-800 mb-1">Nq (Terzaghi 1943):</p>
+                        <p class="font-mono text-sm bg-white p-2 rounded">Nq = e<sup>2(3π/4 - φ/2)·tan(φ)</sup> /
+                            [2·cos²(45° + φ/2)]</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                        <p class="font-bold text-purple-800 mb-1">Nc:</p>
+                        <p class="font-mono text-sm bg-white p-2 rounded">Nc = (Nq - 1) · cot(φ)</p>
+                        <p class="text-xs text-gray-500 mt-1">Para φ = 0: Nc = 5.7</p>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                        <p class="font-bold text-orange-800 mb-1">Nγ (Tabla empírica Terzaghi):</p>
+                        <p class="text-xs text-gray-600">Valores interpolados de tabla original.</p>
+                        <div class="grid grid-cols-5 gap-1 mt-2 text-xs text-center">
+                            <div class="bg-white p-1 rounded"><strong>φ=20°</strong><br>3.64</div>
+                            <div class="bg-white p-1 rounded"><strong>φ=25°</strong><br>8.34</div>
+                            <div class="bg-white p-1 rounded"><strong>φ=30°</strong><br>19.13</div>
+                            <div class="bg-white p-1 rounded"><strong>φ=35°</strong><br>45.41</div>
+                            <div class="bg-white p-1 rounded"><strong>φ=40°</strong><br>115.31</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Formas de Cimentación -->
+            <section>
+                <h3 class="font-bold text-gray-800 mb-3">🏗️ Factores de Forma</h3>
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-3 py-2 text-left">Tipo</th>
+                            <th class="px-3 py-2 text-left">Fórmula qu</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr>
+                            <td class="px-3 py-2 font-medium">Corrido (Strip)</td>
+                            <td class="font-mono text-xs">c·Nc + q·Nq + 0.5·γ·B·Nγ</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 font-medium">Cuadrada</td>
+                            <td class="font-mono text-xs">1.3·c·Nc + q·Nq + 0.4·γ·B·Nγ</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 font-medium">Circular</td>
+                            <td class="font-mono text-xs">1.3·c·Nc + q·Nq + 0.3·γ·B·Nγ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Falla Local -->
+            <section>
+                <h3 class="font-bold text-gray-800 mb-3">⚠️ Ajuste por Falla Local</h3>
+                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                    <p class="text-sm text-gray-700 mb-2">Para suelos sueltos o débiles:</p>
+                    <div class="grid grid-cols-2 gap-4 font-mono text-sm">
+                        <div class="bg-white p-2 rounded text-center">c' = (2/3) · c</div>
+                        <div class="bg-white p-2 rounded text-center">tan(φ') = (2/3) · tan(φ)</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Origen de Datos -->
+            <section class="bg-green-50 rounded-xl p-4 border border-green-200">
+                <h3 class="font-bold text-green-800 mb-2">📊 Origen de los Parámetros</h3>
+                <ul class="text-sm text-green-700 space-y-1">
+                    <li><strong>c (cohesión)</strong> → Ensayo de Corte Directo (ASTM D3080)</li>
+                    <li><strong>φ (ángulo de fricción)</strong> → Ensayo de Corte Directo (ASTM D3080)</li>
+                    <li><strong>γ (peso unitario)</strong> → Peso específico del suelo</li>
+                </ul>
+            </section>
+        </div>
+
+        <div class="p-4 bg-gray-50 border-t text-center">
+            <button onclick="document.getElementById('methodologyModalCBR').classList.add('hidden')"
+                class="bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-yellow-700">
+                Entendido
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function calculateBearingCapacity() {
+        const data = {
+            cohesion: parseFloat(document.getElementById('cohesion').value) || 0,
+            friction_angle: parseFloat(document.getElementById('frictionAngle').value) || 0,
+            unit_weight: parseFloat(document.getElementById('unitWeight').value) || 0,
+            foundation_type: document.getElementById('foundationType').value,
+            failure_mode: document.getElementById('failureMode').value,
+            factor_of_safety: parseFloat(document.getElementById('factorOfSafety').value) || 3.0,
+            foundation_width: parseFloat(document.getElementById('foundationWidth').value) || 1.0,
+            foundation_length: parseFloat(document.getElementById('foundationLength').value) || 1.0,
+            foundation_depth: parseFloat(document.getElementById('foundationDepth').value) || 1.0
+        };
+
+        const response = await fetch('/cbr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            alert(result.error);
+            return;
+        }
+
+        updateResults(result.results);
+    }
+
+    function updateResults(r) {
+        // Main results
+        document.getElementById('res-qu').innerText = r.qu_kgcm2;
+        document.getElementById('res-qa').innerText = r.qa_kgcm2;
+
+        // Factors
+        document.getElementById('res-nc').innerText = r.factors.Nc;
+        document.getElementById('res-nq').innerText = r.factors.Nq;
+        document.getElementById('res-ng').innerText = r.factors.Ng;
+
+        // Effective params
+        document.getElementById('res-ceff').innerText = r.effective_params.c_eff + ' kg/cm²';
+        document.getElementById('res-phieff').innerText = r.effective_params.phi_eff + '°';
+
+        // t/m² results
+        document.getElementById('res-qu-tm2').innerText = r.qu_tm2;
+        document.getElementById('res-qa-tm2').innerText = r.qa_tm2;
+
+        // Auto-validate on calculate
+        validateAgainstSUCS();
+    }
+
+    async function validateAgainstSUCS() {
+        const sucs = document.getElementById('sucs-select').value;
+        const resultsDiv = document.getElementById('validation-results');
+        const phi = parseFloat(document.getElementById('frictionAngle').value) || 0;
+        const cohesion = parseFloat(document.getElementById('cohesion').value) || 0;
+
+        if (!sucs) {
+            resultsDiv.innerHTML = '<p class="text-gray-500 italic">Seleccione un tipo de suelo para validar c y φ</p>';
+            return;
+        }
+
+        const response = await fetch('/validar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sucs: sucs,
+                params: { phi: phi, cohesion: cohesion }
+            })
+        });
+
+        const result = await response.json();
+
+        let html = `<div class="font-medium mb-2">${result.soil_name} (${result.category})</div>`;
+        result.details.forEach(d => {
+            let bgClass = 'bg-green-100 text-green-800';
+            let icon = '✅';
+            if (d.status === 'warning') { bgClass = 'bg-yellow-100 text-yellow-800'; icon = '⚠️'; }
+            else if (d.status === 'error') { bgClass = 'bg-red-100 text-red-800'; icon = '❌'; }
+            html += `<div class="p-2 rounded ${bgClass}">${icon} ${d.message}</div>`;
+        });
+        html += result.valid
+            ? '<div class="mt-2 p-2 bg-green-200 text-green-900 rounded font-bold text-center">✅ c, φ VÁLIDOS para ' + sucs + '</div>'
+            : '<div class="mt-2 p-2 bg-red-200 text-red-900 rounded font-bold text-center">❌ c o φ fuera de rango para ' + sucs + '</div>';
+        resultsDiv.innerHTML = html;
+    }
+</script>
+{% endblock %}

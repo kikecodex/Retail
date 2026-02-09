@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block header %}Clasificación de Suelos (SUCS / ASTM D2487){% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- INPUTS -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <h3 class="font-bold text-gray-700 mb-6 flex items-center gap-2">
+                📂 Parámetros del Suelo
+            </h3>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">% Pasa #200</label>
+                        <input type="number" step="0.01" id="p200"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">% Pasa #4</label>
+                        <input type="number" step="0.01" id="p4"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="100.00">
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 my-2"></div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-blue-500 uppercase mb-1">Límite Líquido (LL)</label>
+                        <input type="number" step="0.01" id="ll"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="0.0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-500 uppercase mb-1">Indice Plast. (IP)</label>
+                        <input type="number" step="0.01" id="pi"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="0.0">
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 my-2"></div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cu</label>
+                        <input type="number" step="0.01" id="cu"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="0.0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cc</label>
+                        <input type="number" step="0.01" id="cc"
+                            class="w-full border p-2 rounded-lg font-mono text-right" placeholder="0.0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2 mt-6">
+                <button onclick="classify()"
+                    class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold transition-all shadow-lg flex justify-center items-center gap-2">
+                    🔍 Clasificar Suelo (Manual)
+                </button>
+                <button onclick="autoClassify()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-all flex justify-center items-center gap-2">
+                    ⚡ Auto-Clasificar (desde datos)
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div
+            class="bg-gradient-to-br from-blue-600 to-slate-900 rounded-xl shadow-lg text-white p-6 flex flex-col justify-center items-center text-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 opacity-10 text-8xl font-black">SUCS</div>
+
+            <h4 class="text-sm uppercase tracking-widest opacity-70 mb-2">Resultado</h4>
+
+            <div id="result-symbol" class="text-6xl font-black mb-2 tracking-tighter">--</div>
+            <div id="result-name" class="text-lg font-light opacity-90">Esperando datos...</div>
+
+            <div id="result-confidence" class="mt-4 text-sm opacity-60 hidden">
+                Confianza: <span id="confidence-value">--</span>%
+            </div>
+
+            <div id="result-details" class="mt-4 text-xs opacity-50 text-left w-full hidden">
+                <div class="bg-white/10 rounded-lg p-3 space-y-1">
+                    <div>Grava: <span id="det-gravel">--</span>%</div>
+                    <div>Arena: <span id="det-sand">--</span>%</div>
+                    <div>Finos: <span id="det-fines">--</span>%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLASTICITY CHART -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                📊 Carta de Plasticidad (Casagrande)
+            </h4>
+            <div class="relative h-64">
+                <canvas id="plasticityChart"></canvas>
+            </div>
+            <div id="chart-zone" class="mt-3 text-center">
+                <span class="text-sm text-gray-500">Zona: </span>
+                <span id="zone-label" class="font-bold text-blue-600">--</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Auto-Classification Panel -->
+    <div id="auto-panel" class="hidden mt-6 bg-white rounded-xl shadow border border-gray-100 p-6">
+        <h4 class="text-sm font-bold text-gray-500 uppercase mb-4">🤖 Auto-Clasificación SUCS (ASTM D2487)</h4>
+        <div id="auto-description" class="text-gray-600"></div>
+    </div>
+
+    <!-- Anomaly Detection Panel -->
+    <div id="anomaly-panel" class="hidden mt-4 bg-white rounded-xl shadow border border-gray-100 p-4">
+        <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">⚠️ Detección de Anomalías</h4>
+        <div id="anomaly-results" class="space-y-2"></div>
+    </div>
+
+</div>
+
+<script>
+    let plasticityChart = null;
+
+    function initPlasticityChart() {
+        const ctx = document.getElementById('plasticityChart').getContext('2d');
+
+        // Generate Line A: PI = 0.73(LL - 20)
+        const lineAData = [];
+        for (let ll = 20; ll <= 110; ll += 5) {
+            lineAData.push({ x: ll, y: 0.73 * (ll - 20) });
+        }
+
+        // Generate Line U: PI = 0.9(LL - 8)
+        const lineUData = [];
+        for (let ll = 8; ll <= 70; ll += 5) {
+            lineUData.push({ x: ll, y: 0.9 * (ll - 8) });
+        }
+
+        // LL = 50 vertical line
+        const ll50Line = [{ x: 50, y: 0 }, { x: 50, y: 60 }];
+
+        // PI = 4 horizontal line
+        const pi4Line = [{ x: 0, y: 4 }, { x: 25.5, y: 4 }];
+
+        plasticityChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Línea A',
+                        data: lineAData,
+                        type: 'line',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Línea U',
+                        data: lineUData,
+                        type: 'line',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [3, 3],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'LL=50',
+                        data: ll50Line,
+                        type: 'line',
+                        borderColor: '#9ca3af',
+                        borderWidth: 1,
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'PI=4',
+                        data: pi4Line,
+                        type: 'line',
+                        borderColor: '#9ca3af',
+                        borderWidth: 1,
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Suelo Actual',
+                        data: [],
+                        backgroundColor: '#22c55e',
+                        borderColor: '#16a34a',
+                        borderWidth: 3,
+                        pointRadius: 12,
+                        pointStyle: 'star'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    annotation: {
+                        annotations: {
+                            clZone: { type: 'label', xValue: 35, yValue: 20, content: 'CL', font: { size: 12, weight: 'bold' }, color: '#6366f1' },
+                            chZone: { type: 'label', xValue: 70, yValue: 45, content: 'CH', font: { size: 12, weight: 'bold' }, color: '#6366f1' },
+                            mlZone: { type: 'label', xValue: 35, yValue: 8, content: 'ML', font: { size: 12, weight: 'bold' }, color: '#22c55e' },
+                            mhZone: { type: 'label', xValue: 70, yValue: 20, content: 'MH', font: { size: 12, weight: 'bold' }, color: '#22c55e' }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Límite Líquido (LL)' },
+                        min: 0, max: 110
+                    },
+                    y: {
+                        title: { display: true, text: 'Índice de Plasticidad (IP)' },
+                        min: 0, max: 60
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePlasticityChart(ll, pi) {
+        if (!plasticityChart) return;
+
+        // Update soil point
+        plasticityChart.data.datasets[4].data = [{ x: ll, y: pi }];
+        plasticityChart.update();
+
+        // Determine zone
+        const lineA = 0.73 * (ll - 20);
+        let zone = '';
+
+        if (ll < 50) {
+            if (pi > lineA && pi >= 4) {
+                zone = 'CL - Arcilla baja plasticidad';
+            } else if (pi >= 4 && pi <= 7 && pi > lineA) {
+                zone = 'CL-ML - Arcilla limosa';
+            } else {
+                zone = 'ML - Limo';
+            }
+        } else {
+            if (pi > lineA) {
+                zone = 'CH - Arcilla alta plasticidad';
+            } else {
+                zone = 'MH - Limo elástico';
+            }
+        }
+
+        document.getElementById('zone-label').innerText = zone;
+    }
+
+    async function classify() {
+        const ll = parseFloat(document.getElementById('ll').value) || 0;
+        const pi = parseFloat(document.getElementById('pi').value) || 0;
+
+        const data = {
+            p200: document.getElementById('p200').value,
+            p4: document.getElementById('p4').value,
+            ll: ll,
+            pi: pi,
+            cu: document.getElementById('cu').value,
+            cc: document.getElementById('cc').value
+        };
+
+        const response = await fetch('/clasificacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const res = await response.json();
+
+        if (res.success) {
+            document.getElementById('result-symbol').innerText = res.results.symbol;
+            document.getElementById('result-name').innerText = res.results.name;
+        } else {
+            document.getElementById('result-symbol').innerText = "Error";
+            document.getElementById('result-name').innerText = res.error;
+        }
+
+        // Update plasticity chart
+        updatePlasticityChart(ll, pi);
+    }
+
+    async function autoClassify() {
+        const response = await fetch('/auto_classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        const res = await response.json();
+
+        document.getElementById('result-symbol').innerText = res.symbol || '--';
+        document.getElementById('result-name').innerText = res.name || 'Sin clasificar';
+
+        // Show confidence
+        if (res.confidence) {
+            document.getElementById('result-confidence').classList.remove('hidden');
+            document.getElementById('confidence-value').innerText = res.confidence;
+        }
+
+        // Show details
+        if (res.details) {
+            document.getElementById('result-details').classList.remove('hidden');
+            document.getElementById('det-gravel').innerText = res.details.gravel_percent || '--';
+            document.getElementById('det-sand').innerText = res.details.sand_percent || '--';
+            document.getElementById('det-fines').innerText = res.details.fines_percent || '--';
+        }
+
+        // Show auto panel
+        if (res.description) {
+            document.getElementById('auto-panel').classList.remove('hidden');
+            document.getElementById('auto-description').innerText = res.description;
+        }
+
+        // Get plasticity chart position
+        const chartRes = await fetch('/plasticity_chart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const chartData = await chartRes.json();
+        if (chartData.position) {
+            updatePlasticityChart(chartData.position.x, chartData.position.y);
+        }
+
+        // Check for anomalies
+        detectAnomalies();
+    }
+
+    async function detectAnomalies() {
+        const response = await fetch('/detect_anomalies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        const res = await response.json();
+
+        if (res.anomalies && res.anomalies.length > 0) {
+            document.getElementById('anomaly-panel').classList.remove('hidden');
+            let html = '';
+            res.anomalies.forEach(a => {
+                let bgClass = a.severity === 'critical' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                let icon = a.severity === 'critical' ? '❌' : '⚠️';
+                html += `<div class="p-2 rounded ${bgClass}">${icon} ${a.message}</div>`;
+            });
+            document.getElementById('anomaly-results').innerHTML = html;
+        } else {
+            document.getElementById('anomaly-panel').classList.remove('hidden');
+            document.getElementById('anomaly-results').innerHTML = '<div class="p-2 bg-green-100 text-green-800 rounded">✅ No se detectaron anomalías</div>';
+        }
+    }
+
+    // Initialize chart
+    initPlasticityChart();
+</script>
+{% endblock %}

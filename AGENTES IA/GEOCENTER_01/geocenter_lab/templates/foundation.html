@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block header %}Condiciones de Cimentación (Meyerhof){% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Condiciones de Cimentación</h2>
+    <button onclick="document.getElementById('methodologyModalFdn').classList.remove('hidden')"
+        class="text-teal-600 hover:text-teal-800 text-sm font-semibold flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Metodología
+    </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- LEFT: Inputs -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-gray-700">🏗️ Parámetros</h3>
+            <button onclick="calculateFoundation()"
+                class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow-md transition-all font-semibold">
+                ⚡ Calcular
+            </button>
+        </div>
+        <div class="p-4 overflow-auto flex-1 space-y-4">
+            <!-- Soil -->
+            <div class="bg-teal-50 p-4 rounded-lg border border-teal-100">
+                <h4 class="text-xs font-bold text-teal-600 uppercase mb-3">Suelo</h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <label class="text-xs text-gray-500">Cohesión c (kPa)</label>
+                        <input type="number" step="0.1" id="cohesion" value="126.5" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Ángulo φ (°)</label>
+                        <input type="number" step="0.01" id="phi" value="0" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Peso γ (kN/m³)</label>
+                        <input type="number" step="0.1" id="gamma" value="16.7" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Módulo E (kPa)</label>
+                        <input type="number" step="100" id="modulus" value="22000" class="w-full p-2 border rounded">
+                    </div>
+                </div>
+            </div>
+            <!-- Foundation -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 class="text-xs font-bold text-gray-600 uppercase mb-3">Cimentación</h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <label class="text-xs text-gray-500">Ancho B (m)</label>
+                        <input type="number" step="0.1" id="B" value="2.17" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Largo L (m)</label>
+                        <input type="number" step="0.1" id="L" value="2.17" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Profundidad Df (m)</label>
+                        <input type="number" step="0.1" id="Df" value="1.2" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Factor Seguridad</label>
+                        <input type="number" step="0.1" id="FS" value="3" class="w-full p-2 border rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="flex flex-col gap-4">
+        <!-- Main Results -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-teal-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Última</div>
+                <div class="text-2xl font-bold text-gray-800" id="res-qu">--</div>
+                <div class="text-xs text-gray-400">kPa (<span id="res-qu-kg">--</span> kg/cm²)</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-green-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Admisible</div>
+                <div class="text-2xl font-bold text-green-700" id="res-qa">--</div>
+                <div class="text-xs text-gray-400">kPa (<span id="res-qa-kg">--</span> kg/cm²)</div>
+            </div>
+        </div>
+
+        <!-- Factors -->
+        <div class="bg-white rounded-xl shadow border p-4">
+            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Factores de Capacidad</h4>
+            <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                <div class="bg-blue-50 p-2 rounded"><span class="text-xs text-blue-400">Nc</span>
+                    <div class="font-bold" id="fNc">--</div>
+                </div>
+                <div class="bg-purple-50 p-2 rounded"><span class="text-xs text-purple-400">Nq</span>
+                    <div class="font-bold" id="fNq">--</div>
+                </div>
+                <div class="bg-orange-50 p-2 rounded"><span class="text-xs text-orange-400">Nγ</span>
+                    <div class="font-bold" id="fNg">--</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-sm mt-2">
+                <div class="bg-gray-50 p-2 rounded"><span class="text-xs text-gray-400">Sc</span>
+                    <div class="font-mono text-xs" id="fSc">--</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded"><span class="text-xs text-gray-400">Dc</span>
+                    <div class="font-mono text-xs" id="fDc">--</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded"><span class="text-xs text-gray-400">Fc</span>
+                    <div class="font-mono text-xs" id="fFc">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settlement -->
+        <div class="bg-white rounded-xl shadow border p-4">
+            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Asentamiento Elástico</h4>
+            <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                <div class="bg-teal-50 p-2 rounded border border-teal-200">
+                    <span class="text-xs text-teal-500">Centro (Sc)</span>
+                    <div class="font-bold text-teal-700" id="sSc">--</div>
+                    <div class="text-xs text-gray-400">cm</div>
+                </div>
+                <div class="bg-cyan-50 p-2 rounded border border-cyan-200">
+                    <span class="text-xs text-cyan-500">Esquina (Se)</span>
+                    <div class="font-bold text-cyan-700" id="sSe">--</div>
+                    <div class="text-xs text-gray-400">cm</div>
+                </div>
+                <div class="bg-indigo-50 p-2 rounded border border-indigo-200">
+                    <span class="text-xs text-indigo-500">Diferencial</span>
+                    <div class="font-bold text-indigo-700" id="sDs">--</div>
+                    <div class="text-xs text-gray-400">cm</div>
+                </div>
+            </div>
+            <div class="mt-2 p-2 rounded text-center text-sm" id="settlementStatus">
+                Ingrese datos y calcule
+            </div>
+        </div>
+
+        <!-- Design Recommendation -->
+        <div class="bg-gradient-to-r from-teal-500 to-green-500 rounded-xl shadow p-4 text-white text-center">
+            <div class="text-xs uppercase font-bold opacity-80">Capacidad de Diseño</div>
+            <div class="text-3xl font-bold" id="res-design">--</div>
+            <div class="text-sm opacity-80">kg/cm² (verificado por asentamiento)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Methodology Modal -->
+<div id="methodologyModalFdn" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-2/3 shadow-lg rounded-md bg-white">
+        <div class="text-center">
+            <h3 class="text-lg font-medium text-gray-900">Metodología: Meyerhof (1963)</h3>
+            <div class="mt-2 px-4 py-3 text-left text-sm space-y-2">
+                <p class="text-gray-600"><strong>Capacidad Última:</strong></p>
+                <code
+                    class="bg-gray-100 p-1 rounded text-xs block">qu = c'·Nc·Sc·Dc·ic·Fc + q·Nq·Sq·Dq·iq·Fq + 0.5·γ·B·Nγ·Sγ·Dγ·iγ·Fγ</code>
+                <p class="text-gray-600 mt-2"><strong>Asentamiento Elástico:</strong></p>
+                <code class="bg-gray-100 p-1 rounded text-xs block">Sc = Δq·B·(1-ν²)·If / E (cm)</code>
+                <p class="text-gray-500 text-xs mt-2">Referencia: Das, B.M. "Principios de Ingeniería de Cimentaciones"
+                    + Excel ENSAYOS.xlsx</p>
+            </div>
+            <button onclick="document.getElementById('methodologyModalFdn').classList.add('hidden')"
+                class="mt-3 px-4 py-2 bg-teal-500 text-white rounded-md w-full hover:bg-teal-700">Entendido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function calculateFoundation() {
+        const data = {
+            cohesion_kpa: parseFloat(document.getElementById('cohesion').value) || 0,
+            friction_angle: parseFloat(document.getElementById('phi').value) || 0,
+            unit_weight_kn: parseFloat(document.getElementById('gamma').value) || 0,
+            elastic_modulus_kpa: parseFloat(document.getElementById('modulus').value) || 22000,
+            foundation_width: parseFloat(document.getElementById('B').value) || 1,
+            foundation_length: parseFloat(document.getElementById('L').value) || 1,
+            foundation_depth: parseFloat(document.getElementById('Df').value) || 1,
+            factor_of_safety: parseFloat(document.getElementById('FS').value) || 3,
+            poisson_ratio: 0.25,
+            layer_thickness: 8
+        };
+        const res = await fetch('/cimentacion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        const r = await res.json();
+        if (r.error) { alert(r.error); return; }
+        const d = r.results;
+        document.getElementById('res-qu').innerText = d.bearing_capacity.qu_kpa;
+        document.getElementById('res-qu-kg').innerText = d.bearing_capacity.qu_kgcm2;
+        document.getElementById('res-qa').innerText = d.bearing_capacity.qa_kpa;
+        document.getElementById('res-qa-kg').innerText = d.bearing_capacity.qa_kgcm2;
+        document.getElementById('fNc').innerText = d.bearing_factors.Nc;
+        document.getElementById('fNq').innerText = d.bearing_factors.Nq;
+        document.getElementById('fNg').innerText = d.bearing_factors.Ng;
+        document.getElementById('fSc').innerText = d.shape_factors.Sc;
+        document.getElementById('fDc').innerText = d.depth_factors.Dc;
+        document.getElementById('fFc').innerText = d.compressibility.Fc;
+        document.getElementById('sSc').innerText = d.settlement.Sc_cm;
+        document.getElementById('sSe').innerText = d.settlement.Se_cm;
+        document.getElementById('sDs').innerText = d.settlement.Ds_cm;
+        document.getElementById('res-design').innerText = d.design.qa_design_kgcm2;
+        const status = document.getElementById('settlementStatus');
+        if (d.design.settlement_ok) {
+            status.className = 'mt-2 p-2 rounded text-center text-sm bg-green-100 text-green-700';
+            status.innerText = '✓ Asentamiento dentro del límite (≤2.5 cm)';
+        } else {
+            status.className = 'mt-2 p-2 rounded text-center text-sm bg-yellow-100 text-yellow-700';
+            status.innerText = '⚠ Asentamiento excede límite. qa ajustado.';
+        }
+    }
+</script>
+{% endblock %}

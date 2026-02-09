@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Ensayo - GEOCENTER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for rendering graphs in report (via script or passing image data) 
+         Note: Ideally we pass the image dataURL from the frontend inputs, but for simplicity here we might need to re-render or rely on the user simple print.
+         Better approach for 'just like PDF': use a clean CSS table structure. Graphs are hard to persist without a real DB saving the image.
+         Workaround: We will render the report but might miss the specific Chart unless we used localstorage or complex saving.
+         For this version, I'll layout the TEXT/TABLE data perfectly. The user can take a screenshot of the graph or we assume the Graphs are less critical than the data tables for the "Layout".
+         Wait, user wants the report "TAL Y COMO ESTA EN EL PDF", which definitely implies graphs.
+         I'll add a placeholder for "Paste Graph Here" or try to re-render if data exists.
+         Actually, let's use a cool trick: We simply re-instantiate the chart with the same data if possible.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            -webkit-print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        .a4-page {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            background: white;
+            padding: 1cm;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+
+            .a4-page {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            body {
+                background: white;
+            }
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 4px;
+        }
+
+        .header-cell {
+            background-color: #e5e7eb;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .section-title {
+            background-color: #1f2937;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            text-transform: uppercase;
+            margin-top: 10px;
+            border: 1px solid black;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-8">
+
+    <div class="fixed top-4 right-4 no-print flex gap-2">
+        <button onclick="window.print()"
+            class="bg-blue-600 text-white px-4 py-2 rounded shadow font-bold hover:bg-blue-700">🖨️ Imprimir /
+            PDF</button>
+        <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded shadow font-bold hover:bg-gray-700">🏠 Volver</a>
+    </div>
+
+    <div class="a4-page">
+
+        <!-- HEADER -->
+        <div class="flex items-center justify-between border border-black p-2 mb-2">
+            <div class="w-1/4 text-center border-r border-black p-2">
+                <!-- LOGO PLACEHOLDER -->
+                <h1 class="text-2xl font-bold text-blue-900 leading-none">GEOCENTER</h1>
+                <div class="text-[9px] text-gray-600">INGENIERIA & CONSTRUCCION</div>
+            </div>
+            <div class="w-3/4 px-4 text-center">
+                <h2 class="text-lg font-bold">ENSAYO DE MECÁNICA DE SUELOS</h2>
+                <div class="text-xs">Granulometría, Límites de Consistencia y Clasificación SUCS</div>
+            </div>
+        </div>
+
+        <!-- PROJECT DATA -->
+        <table class="mb-4">
+            <tr>
+                <td class="header-cell w-32">PROYECTO:</td>
+                <td colspan="3" class="uppercase">{{ project.project }}</td>
+            </tr>
+            <tr>
+                <td class="header-cell">UBICACIÓN:</td>
+                <td colspan="3" class="uppercase">{{ project.location }}</td>
+            </tr>
+            <tr>
+                <td class="header-cell">SOLICITANTE:</td>
+                <td colspan="3" class="uppercase">{{ project.client }}</td>
+            </tr>
+            <tr>
+                <td class="header-cell">CALICATA:</td>
+                <td class="uppercase">{{ project.sample_id }}</td> <!-- Mapping Calicata approx -->
+                <td class="header-cell w-32">PROFUNDIDAD:</td>
+                <td>{{ project.depth }}</td>
+            </tr>
+        </table>
+
+        <!-- 1. DETAILED GRANULOMETRY TABLE (TOP) -->
+        <div class="mb-4">
+            <div class="section-title">GRANULOMETRÍA (ASTM D422)</div>
+            <table class="text-xs text-center border-collapse border border-black w-full font-medium">
+                <thead class="bg-gray-100 font-bold border-b border-black">
+                    <tr>
+                        <td class="border-r border-black p-1">Tamiz</td>
+                        <td class="border-r border-black p-1">Abertura (mm)</td>
+                        <td class="border-r border-black p-1">Peso Retenido (gr)</td>
+                        <td class="border-r border-black p-1">% Retenido Parcial</td>
+                        <td class="border-r border-black p-1">% Retenido Acum.</td>
+                        <td class="p-1">% Que Pasa</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if gran %}
+                    {% for row in gran %}
+                    <tr class="border-b border-gray-300">
+                        <td class="font-bold border-r border-black p-1">{{ row.size_label }}</td>
+                        <td class="border-r border-black p-1">{{ "%.3f"|format(row.opening_mm) }}</td>
+                        <td class="border-r border-black p-1">{{ "%.2f"|format(row.weight_retained) }}</td>
+                        <td class="border-r border-black p-1">{{ "%.2f"|format(row.percent_retained) }}</td>
+                        <td class="border-r border-black p-1">{{ "%.2f"|format(row.cumulative_retained) }}</td>
+                        <td class="font-bold bg-gray-50 p-1">{{ "%.2f"|format(row.percent_passing) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-gray-400">Sin datos</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. MAIN CONTENT: GRAPH & DESCRIPTION TABLE -->
+        <div class="flex gap-2 mb-2 h-auto">
+            <!-- LEFT: GRANULOMETRY GRAPH -->
+            <div class="w-7/12 border border-black relative bg-white h-[400px]">
+                <canvas id="printGranChart"></canvas>
+            </div>
+
+            <!-- RIGHT: COMPACT DESCRIPTION & LIMITS -->
+            <div class="w-5/12 flex flex-col gap-1">
+                <!-- CLASSIFICATION TABLE -->
+                <div class="border border-black">
+                    <div class="font-bold text-center bg-gray-200 text-xs py-1 border-b border-black">DESCRIPCIÓN DE
+                        DATOS</div>
+                    <table class="w-full text-[10px] font-bold">
+                        <tr class="border-b border-gray-300">
+                            <td class="bg-gray-50 p-1 w-1/2">Clasificación SUCS:</td>
+                            <td class="p-1 text-center">{{ sucs.symbol if sucs else '--' }} ({{ sucs.name if sucs else
+                                '' }})</td>
+                        </tr>
+                        <tr class="border-b border-black">
+                            <td class="bg-gray-50 p-1">Cont. Humedad (%):</td>
+                            <td class="p-1 text-center">{{ moist.average if moist else '--' }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- LIMITS BLOCK (Table + Chart style matching user image) -->
+                <div class="border border-black flex-grow flex flex-col">
+                    <div class="font-bold text-center bg-gray-800 text-white text-[10px] py-1">LÍMITES DE CONSISTENCIA
+                        (ASTM D4318)</div>
+
+                    <!-- Table and Chart Container -->
+                    <div class="flex flex-col h-full bg-white p-1">
+                        <!-- Limits Table -->
+                        <table class="w-full text-[10px] border-collapse border border-black mb-1">
+                            <tr>
+                                <td class="bg-gray-100 border border-black p-1">Límite Líquido (LL)</td>
+                                <td class="border border-black p-1 text-center font-bold">{{ "%.2f"|format(limits.LL) if
+                                    limits and limits.LL else '--' }} %</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-gray-100 border border-black p-1">Límite Plástico (PL)</td>
+                                <td class="border border-black p-1 text-center font-bold">{{ "%.2f"|format(limits.PL) if
+                                    limits and limits.PL else '--' }} %</td>
+                            </tr>
+                            <tr>
+                                <td class="bg-gray-100 border border-black p-1">Indice Plástico (PI)</td>
+                                <td class="border border-black p-1 text-center font-bold">{{ "%.2f"|format(limits.PI) if
+                                    limits and limits.PI else '--' }} %</td>
+                            </tr>
+                        </table>
+
+                        <!-- Limits Chart -->
+                        <div class="relative flex-grow min-h-[120px] border border-gray-200">
+                            <canvas id="printLimitsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AASHTO (Small) -->
+                <div class="border border-black text-[10px] p-1 text-center">
+                    <span class="font-bold">AASHTO:</span>
+                    {% set p200 = gran_metrics.fractions.fines if gran_metrics else 0 %}
+                    {% set ll = limits.LL if limits else 0 %}
+                    {% set pi = limits.PI if limits else 0 %}
+                    {% if p200 <= 35 %} {% if ll <=40 and pi>= 11 %} A-2-6 (G-A Arcillosa)
+                        {% elif ll >= 41 and pi >= 11 %} A-2-7 (G-A Arcillosa)
+                        {% else %} A-1/A-3 (Granular) {% endif %}
+                        {% else %} A-4/A-7 (Fino) {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DETAILED GRANULOMETRY TABLE (BOTTOM) -->
+        <div class="mb-4">
+            <div class="section-title">CUADRO RESUMEN</div>
+            <table class="text-xs border-2 border-black font-bold w-full text-center">
+                <tr>
+                    <td class="bg-gray-100 p-1 w-1/6">% GRAVA</td>
+                    <td class="p-1 w-1/6 text-lg">{{ gran_metrics.fractions.gravel.total if gran_metrics else '--' }}
+                    </td>
+                    <td class="bg-gray-100 p-1 w-1/6 text-right">% Gruesa :</td>
+                    <td class="p-1 w-1/6">{{ gran_metrics.fractions.gravel.coarse if gran_metrics else '--' }}</td>
+                    <td class="bg-gray-100 p-1 w-1/6 text-right">D60 (mm) =</td>
+                    <td class="p-1 w-1/6">{{ gran_metrics.d60 if gran_metrics else '--' }}</td>
+                </tr>
+                <tr>
+                    <td class="bg-gray-100 p-1" rowspan="2">% ARENA</td>
+                    <td class="p-1 text-lg" rowspan="2">{{ gran_metrics.fractions.sand.total if gran_metrics else '--'
+                        }}</td>
+                    <td class="bg-gray-100 p-1 text-right">% Fina :</td>
+                    <td class="p-1">{{ gran_metrics.fractions.gravel.fine if gran_metrics else '--' }}</td>
+                    <td class="bg-gray-100 p-1 text-right">D30 (mm) =</td>
+                    <td class="p-1">{{ gran_metrics.d30 if gran_metrics else '--' }}</td>
+                </tr>
+                <tr>
+                    <!-- Rowspan coverage -->
+                    <td class="bg-gray-100 p-1 text-right border-t border-black">% Gruesa :</td>
+                    <td class="p-1 border-t border-black">{{ gran_metrics.fractions.sand.coarse if gran_metrics else
+                        '--' }}</td>
+                    <td class="bg-gray-100 p-1 text-right">D10 (mm) =</td>
+                    <td class="p-1">{{ gran_metrics.d10 if gran_metrics else '--' }}</td>
+                </tr>
+                <tr>
+                    <td class="bg-gray-100 p-1">% FINOS</td>
+                    <td class="p-1 text-lg">{{ gran_metrics.fractions.fines if gran_metrics else '--' }}</td>
+                    <td class="bg-gray-100 p-1 text-right">% Media :</td>
+                    <td class="p-1">{{ gran_metrics.fractions.sand.medium if gran_metrics else '--' }}</td>
+                    <td class="bg-gray-100 p-1 text-right">Coef. Uniformidad (Cu) =</td>
+                    <td class="p-1">{{ gran_metrics.cu if gran_metrics else '--' }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="border-hidden"></td>
+                    <td class="bg-gray-100 p-1 text-right">% Fina :</td>
+                    <td class="p-1">{{ gran_metrics.fractions.sand.fine if gran_metrics else '--' }}</td>
+                    <td class="bg-gray-100 p-1 text-right">Coef. Compacidad (Cc) =</td>
+                    <td class="p-1">{{ gran_metrics.cc if gran_metrics else '--' }}</td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- PAGE 2: MOISTURE CONTENT -->
+    <div class="a4-page" style="page-break-before: always;">
+
+        <!-- HEADER PAGE 2 -->
+        <div class="text-center font-bold mb-4 relative">
+            <div class="absolute top-0 right-0 border border-black px-2 text-xs">Solicitud N° J-050-2025</div>
+            <h2 class="text-lg uppercase">Determinación del Contenido de Humedad del Suelo</h2>
+            <div class="text-xs">(NTP 339.127-1998)</div>
+            <div class="text-xs text-right mt-2">Pag. 02 de 07</div>
+        </div>
+
+        <!-- PROJECT INFO BLOCK PAGE 2 -->
+        <table class="mb-4 text-xs">
+            <tr class="border-t border-l border-r border-black">
+                <td class="font-bold w-24 p-1">Proyecto</td>
+                <td colspan="3" class="p-1 uppercase">: {{ project.project }}</td>
+            </tr>
+            <tr class="border-l border-r border-black">
+                <td class="font-bold p-1">Solicita</td>
+                <td class="p-1 uppercase">: {{ project.client }}</td>
+                <td class="font-bold w-24 text-right p-1">Fecha :</td>
+                <td class="w-32 p-1">14/11/2025</td>
+            </tr>
+            <tr class="border-b border-l border-r border-black">
+                <td class="font-bold p-1">Lugar</td>
+                <td class="p-1 uppercase">: {{ project.location }}</td>
+                <td class="font-bold text-right p-1">Tecnico :</td>
+                <td class="p-1">J.L.C.</td>
+            </tr>
+        </table>
+
+        <!-- SAMPLE DATA HEADER -->
+        <table class="mb-6 text-xs text-center font-bold">
+            <tr class="bg-gray-200">
+                <td class="border border-black p-1">Descripción : Capacidad Portante</td>
+                <td class="border border-black p-1">Coordenadas : X=264853.40 ...</td>
+                <td class="border border-black p-1">Material : GC</td>
+            </tr>
+            <tr>
+                <td class="border border-black p-1">Calicata : {{ project.sample_id }}</td>
+                <td class="border border-black p-1">Muestra : Mab-01</td>
+                <td class="border border-black p-1">Profundidad : {{ project.depth }}</td>
+            </tr>
+        </table>
+
+        <!-- MOISTURE EXACT TABLE -->
+        <table class="text-xs border-collapse border border-black w-full text-center">
+            <thead>
+                <tr class="font-bold border-b-2 border-black">
+                    <td class="p-2 w-1/2 border-r border-black uppercase text-left pl-4">Descripción</td>
+                    <td class="p-2 w-16 border-r border-black">Símbolo</td>
+                    <td class="p-2 border-r border-black">M-01</td>
+                    <td class="p-2">M-02</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% if moist and moist.samples %}
+                {% set m1 = moist.samples[0] %}
+                {% set m2 = moist.samples[1] %}
+                <!-- Rows -->
+                <tr class="border-b border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Peso Suelo Húmedo + Contenedor</td>
+                    <td class="p-1 border-r border-black">Mcws</td>
+                    <td class="p-1 border-r border-black">{{ "%.2f"|format(m1.wet_tare) }}</td>
+                    <td class="p-1">{{ "%.2f"|format(m2.wet_tare) if m2 else '--' }}</td>
+                </tr>
+                <tr class="border-b border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Peso Suelo Seco + Contenedor</td>
+                    <td class="p-1 border-r border-black">Mcs</td>
+                    <td class="p-1 border-r border-black">{{ "%.2f"|format(m1.dry_tare) }}</td>
+                    <td class="p-1">{{ "%.2f"|format(m2.dry_tare) if m2 else '--' }}</td>
+                </tr>
+                <tr class="border-b border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Peso Contenedor</td>
+                    <td class="p-1 border-r border-black">Mc</td>
+                    <td class="p-1 border-r border-black">{{ "%.2f"|format(m1.tare) }}</td>
+                    <td class="p-1">{{ "%.2f"|format(m2.tare) if m2 else '--' }}</td>
+                </tr>
+                <tr class="border-b border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Peso Suelo Seco (Ms = Mcs - Mc)</td>
+                    <td class="p-1 border-r border-black">Ms</td>
+                    <td class="p-1 border-r border-black">{{ "%.2f"|format(m1.dry_tare - m1.tare) }}</td>
+                    <td class="p-1">{{ "%.2f"|format(m2.dry_tare - m2.tare) if m2 else '--' }}</td>
+                </tr>
+                <tr class="border-b border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Peso del Agua (Mw = Mcws - Mcs)</td>
+                    <td class="p-1 border-r border-black">Mw</td>
+                    <td class="p-1 border-r border-black">{{ "%.2f"|format(m1.wet_tare - m1.dry_tare) }}</td>
+                    <td class="p-1">{{ "%.2f"|format(m2.wet_tare - m2.dry_tare) if m2 else '--' }}</td>
+                </tr>
+                <tr class="border-b-2 border-black">
+                    <td class="text-left p-1 border-r border-black pl-2">Contenido de Humedad (w = Mw/Ms)</td>
+                    <td class="p-1 border-r border-black">w %</td>
+                    <td class="p-1 border-r border-black">{{ m1.w_percent }}</td>
+                    <td class="p-1">{{ m2.w_percent if m2 else '--' }}</td>
+                </tr>
+                {% endif %}
+                <tr class="font-bold border border-black">
+                    <td colspan="2" class="p-2 uppercase border-r border-black">Humedad Promedio (%)</td>
+                    <td colspan="2" class="p-2 text-lg">{{ moist.average if moist else '--' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+
+        <!-- FOOTER -->
+        <div class="mt-12 flex justify-between px-10 text-center text-xs">
+            <div class="w-40 border-t border-black pt-2">
+                <strong>Realizado por:</strong><br>
+                Tec. de Laboratorio
+            </div>
+            <div class="w-40 border-t border-black pt-2">
+                <strong>Revisado por:</strong><br>
+                Jefe de Laboratorio
+            </div>
+            <div class="w-40 border-t border-black pt-2">
+                <strong>Aprobado por:</strong><br>
+                Ing. Civil
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PAGE 3: LIMITS REPORT -->
+    <div class="a4-page" style="page-break-before: always;">
+        <!-- HEADER PAGE 3 -->
+        <div class="text-center font-bold mb-4 relative">
+            <div class="absolute top-0 right-0 border border-black px-2 text-xs">Solicitud N° J-050-2025</div>
+            <h2 class="text-lg uppercase">Límite Líquido, Límite Plástico e Indice de Plasticidad de Suelos</h2>
+            <div class="text-xs">(NTP 339.129-1999)</div>
+            <div class="text-xs text-right mt-2">Pag. 03 de 07</div>
+        </div>
+
+        <!-- PROJECT INFO BLOCK PAGE 3 -->
+        <table class="mb-4 text-xs">
+            <tr class="border-t border-l border-r border-black">
+                <td class="font-bold w-24 p-1">Proyecto</td>
+                <td colspan="3" class="p-1 uppercase">: {{ project.project }}</td>
+            </tr>
+            <tr class="border-l border-r border-black">
+                <td class="font-bold p-1">Solicita</td>
+                <td class="p-1 uppercase">: {{ project.client }}</td>
+                <td class="font-bold w-24 text-right p-1">Fecha :</td>
+                <td class="w-32 p-1">14/11/2025</td>
+            </tr>
+            <tr class="border-b border-l border-r border-black">
+                <td class="font-bold p-1">Lugar</td>
+                <td class="p-1 uppercase">: {{ project.location }}</td>
+                <td class="font-bold text-right p-1">Tecnico :</td>
+                <td class="p-1">J.L.C.</td>
+            </tr>
+        </table>
+
+        <!-- SAMPLE DATA HEADER -->
+        <table class="mb-6 text-xs text-center font-bold">
+            <tr class="bg-gray-200">
+                <td class="border border-black p-1">Descripción : Capacidad Portante</td>
+                <td class="border border-black p-1">Coordenadas : X=264853.40 ...</td>
+                <td class="border border-black p-1">Material : GC</td>
+            </tr>
+            <tr>
+                <td class="border border-black p-1">Calicata : {{ project.sample_id }}</td>
+                <td class="border border-black p-1">Muestra : Mab-01</td>
+                <td class="border border-black p-1">Profundidad : {{ project.depth }}</td>
+            </tr>
+        </table>
+
+        <!-- DETERMINACION DEL LIMITE LIQUIDO -->
+        <div class="text-center font-bold text-xs mb-2">DETERMINACIÓN DEL LÍMITE LÍQUIDO</div>
+        <div class="flex mb-6">
+            <!-- LL TABLE -->
+            <div class="w-1/2 pr-2">
+                <table class="text-xs border border-black w-full text-center">
+                    <tr class="border-b border-black">
+                        <td class="p-1 border-r border-black w-1/3">ENSAYO DE LABORATORIO / DATOS</td>
+                        <td class="p-1" colspan="4">LÍMITE LÍQUIDO</td>
+                    </tr>
+                    <tr class="border-b border-black font-bold bg-gray-100">
+                        <td class="p-1 border-r border-black text-left pl-2">N° de frasco</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ loop.index }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-black">
+                        <td class="p-1 border-r border-black text-left pl-2">N° de golpes</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black font-bold">{{ pt.blows }}</td>
+                        {% endfor %}
+                    </tr>
+                    <!-- Rows 1-6 -->
+                    <tr class="border-b border-gray-300">
+                        <td class="p-1 border-r border-black text-left pl-2">(1) P. Suelo Húmedo + Rec. (gr)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ pt.wet_tare }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-gray-300">
+                        <td class="p-1 border-r border-black text-left pl-2">(2) P. Suelo Seco + Rec. (gr)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ pt.dry_tare }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-gray-300">
+                        <td class="p-1 border-r border-black text-left pl-2">(3) Peso del Recipiente (gr)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ pt.tare }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-gray-300">
+                        <td class="p-1 border-r border-black text-left pl-2">(4) Peso del agua (gr) (1)-(2)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.wet_tare - pt.dry_tare) }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-gray-300">
+                        <td class="p-1 border-r border-black text-left pl-2">(5) Peso Suelo Seco (gr) (2)-(3)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.dry_tare - pt.tare) }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="border-b border-black">
+                        <td class="p-1 border-r border-black text-left pl-2">(6) C. de Humedad (%) (4)/(5)</td>
+                        {% for pt in limits.ll_data_raw %}
+                        <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.moisture) }}</td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </div>
+            <!-- LL GRAPH -->
+            <div class="w-1/2 pl-2 border border-black h-64 relative bg-white">
+                <div class="text-xs text-center font-bold absolute top-2 w-full">LÍMITE LÍQUIDO</div>
+                <canvas id="page3LLChart"></canvas>
+            </div>
+        </div>
+
+        <!-- DETERMINACION DEL LIMITE PLASTICO -->
+        <div class="text-center font-bold text-xs mb-2">DETERMINACIÓN DEL LÍMITE PLÁSTICO</div>
+        <div class="w-3/4 mx-auto mb-6">
+            <table class="text-xs border border-black w-full text-center">
+                <tr class="border-b border-black">
+                    <td class="p-1 border-r border-black w-1/3">ENSAYO DE LABORATORIO / DATOS</td>
+                    <td class="p-1" colspan="3">LIMITE PLÁSTICO</td>
+                </tr>
+                <tr class="border-b border-black font-bold bg-gray-100">
+                    <td class="p-1 border-r border-black text-left pl-2">N° de frasco</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ loop.index }}</td>
+                    {% endfor %}
+                </tr>
+                <!-- Rows 1-6 PL -->
+                <tr class="border-b border-gray-300">
+                    <td class="p-1 border-r border-black text-left pl-2">(1) P. Suelo Húmedo + Rec. (gr)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ pt.wet_tare }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="border-b border-gray-300">
+                    <td class="p-1 border-r border-black text-left pl-2">(2) P. Suelo Seco + Rec. (gr)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ pt.dry_tare }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="border-b border-gray-300">
+                    <td class="p-1 border-r border-black text-left pl-2">(3) Peso del Recipiente (gr)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ pt.tare }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="border-b border-gray-300">
+                    <td class="p-1 border-r border-black text-left pl-2">(4) Peso del agua (gr) (1)-(2)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.wet_tare - pt.dry_tare) }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="border-b border-gray-300">
+                    <td class="p-1 border-r border-black text-left pl-2">(5) Peso Suelo Seco (gr) (2)-(3)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.dry_tare - pt.tare) }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="border-b border-black">
+                    <td class="p-1 border-r border-black text-left pl-2">(6) C. de Humedad (%) (4)/(5)</td>
+                    {% for pt in limits.pl_data_raw %}
+                    <td class="p-1 border-l border-black">{{ "%.2f"|format(pt.moisture) }}</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+
+        <!-- RESULTS FOOTER -->
+        <div class="border border-black flex text-xs font-bold">
+            <div class="flex-1 p-2 border-r border-black text-center">Límite Liquido (L.L.) = {{
+                "%.2f"|format(limits.LL) }}</div>
+            <div class="flex-1 p-2 border-r border-black text-center">Límite Plástico (L.P.) = {{
+                "%.2f"|format(limits.PL) }}</div>
+            <div class="flex-1 p-2 text-center">Indice Plasticidad (I.P.) = {{ "%.2f"|format(limits.PI) }}</div>
+        </div>
+
+    </div>
+
+    <!-- PAGE 4: SPECIFIC GRAVITY -->
+    <div class="a4-page" style="page-break-before: always;">
+        <!-- HEADER PAGE 4 -->
+        <div class="text-center font-bold mb-4 relative">
+            <div class="absolute top-0 right-0 border border-black px-2 text-xs">Solicitud N° J-050-2025</div>
+            <h2 class="text-lg uppercase">Peso Específico Relativo de las Partículas Sólidas de un Suelo</h2>
+            <div class="text-xs">(NTP 339.131-1999)</div>
+            <div class="text-xs text-right mt-2">Pag. 04 de 07</div>
+        </div>
+
+        <!-- PROJECT INFO BLOCK PAGE 4 -->
+        <table class="mb-4 text-xs">
+            <tr class="border-t border-l border-r border-black">
+                <td class="font-bold w-24 p-1">Proyecto</td>
+                <td colspan="3" class="p-1 uppercase">: {{ project.project }}</td>
+            </tr>
+            <tr class="border-l border-r border-black">
+                <td class="font-bold p-1">Solicita</td>
+                <td class="p-1 uppercase">: {{ project.client }}</td>
+                <td class="font-bold w-24 text-right p-1">Fecha :</td>
+                <td class="w-32 p-1">14/11/2025</td>
+            </tr>
+            <tr class="border-b border-l border-r border-black">
+                <td class="font-bold p-1">Lugar</td>
+                <td class="p-1 uppercase">: {{ project.location }}</td>
+                <td class="font-bold text-right p-1">Tecnico :</td>
+                <td class="p-1">J.L.C.</td>
+            </tr>
+        </table>
+
+        <!-- SAMPLE DATA HEADER -->
+        <table class="mb-6 text-xs text-center font-bold">
+            <tr class="bg-gray-200">
+                <td class="border border-black p-1">Descripción : Capacidad Portante</td>
+                <td class="border border-black p-1">Coordenadas : X=264853.40 ...</td>
+                <td class="border border-black p-1">Material : GC</td>
+            </tr>
+            <tr>
+                <td class="border border-black p-1">Calicata : {{ project.sample_id }}</td>
+                <td class="border border-black p-1">Muestra : Mab-01</td>
+                <td class="border border-black p-1">Profundidad : {{ project.depth }}</td>
+            </tr>
+        </table>
+
+        <!-- SG TABLE -->
+        <div class="border-2 border-black mb-6">
+            <table class="w-full text-xs text-center border-collapse">
+                <thead class="font-bold border-b-2 border-black bg-gray-100">
+                    <tr>
+                        <td class="border-r border-black p-2 w-1/3 text-left pl-4">MUESTRA DE ENSAYO</td>
+                        {% for s in sg.samples %}
+                        <td class="border-r border-black p-2 w-1/3">{{ s.id }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Porcion de muestra
+                            de ensayo</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">Pasa Malla #4</td>{% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Tipo de frasco
+                            Utilizado</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">Picnometro 500 ml</td>{% endfor
+                        %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Masa picnometro +
+                            agua (Ma)</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">{{ "%.2f"|format(s.ma) }}</td>{%
+                        endfor %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Masa picnometro +
+                            agua + suelo (Mb)</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">{{ "%.2f"|format(s.mb) }}</td>{%
+                        endfor %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Masa muestra seco
+                            al horno + recip. (A)</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">{{ "%.2f"|format(s.mo) }}</td>{%
+                        endfor %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-gray-300 p-1 text-left pl-4">Masa recipiente
+                            (B)</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">{{ "%.2f"|format(s.tare) }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="border-r border-black border-b border-black p-1 text-left pl-4">Masa muestra de suelo
+                            seco al horno (Mo=A-B)</td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-1">{{ "%.2f"|format(s.mo) }}</td>{%
+                        endfor %}
+                    </tr>
+                    <tr class="font-bold">
+                        <td class="border-r border-black p-2 text-left pl-4">Peso Especifico Relativo de Solidos (Gs)
+                        </td>
+                        {% for s in sg.samples %}<td class="border-r border-black p-2">{{ s.gs }}</td>{% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- AVERAGE GS -->
+        <div class="border-2 border-black flex font-bold text-sm mb-12">
+            <div class="w-2/3 p-2 bg-gray-100 text-center border-r border-black">PESO ESPECIFICO RELATIVO DE SOLIDOS
+                (Gs)</div>
+            <div class="w-1/3 p-2 text-center">{{ sg.average_gs if sg else '--' }}</div>
+        </div>
+    </div>
+
+    <!-- ===== PAGE 5: PROCTOR MODIFICADO ===== -->
+    {% if proctor %}
+    <div class="a4-page" style="page-break-before: always;">
+        <!-- Header -->
+        <div class="flex items-center justify-between border border-black p-2 mb-4">
+            <div class="w-1/4 text-center border-r border-black p-2">
+                <h1 class="text-xl font-bold text-blue-900">GEOCENTER</h1>
+                <p class="text-xs">Laboratorio de Mecánica de Suelos</p>
+            </div>
+            <div class="flex-1 text-center">
+                <h2 class="text-lg font-bold">ENSAYO PROCTOR MODIFICADO</h2>
+                <p class="text-xs">(ASTM D1557)</p>
+            </div>
+            <div class="w-1/4 text-center border-l border-black p-2 text-xs">
+                <p><strong>Pág:</strong> 05</p>
+            </div>
+        </div>
+
+        <!-- Project Info -->
+        <table class="mb-4 text-xs">
+            <tr>
+                <td class="p-1 w-1/6"><strong>Proyecto:</strong></td>
+                <td colspan="5" class="p-1">{{ project.project }}</td>
+            </tr>
+            <tr>
+                <td class="p-1"><strong>Ubicación:</strong></td>
+                <td class="p-1">{{ project.location }}</td>
+                <td class="p-1 w-1/6"><strong>Muestra:</strong></td>
+                <td class="p-1">{{ project.sample_id }}</td>
+            </tr>
+        </table>
+
+        <!-- Proctor Results Table -->
+        <div class="section-title">RESULTADOS DEL ENSAYO</div>
+        <table class="text-xs mb-4">
+            <thead>
+                <tr class="header-cell">
+                    <th>Punto</th>
+                    <th>Humedad (%)</th>
+                    <th>Densidad Húmeda (g/cm³)</th>
+                    <th>Densidad Seca (g/cm³)</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                {% for p in proctor.points %}
+                <tr>
+                    <td>{{ p.point_num }}</td>
+                    <td>{{ p.moisture_percent }}</td>
+                    <td>{{ p.wet_density }}</td>
+                    <td class="font-bold">{{ p.dry_density }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Summary Box -->
+        <div class="border-2 border-black flex font-bold text-sm mb-4">
+            <div class="w-1/2 p-3 bg-gray-100 text-center border-r border-black">
+                DENSIDAD SECA MÁXIMA (MDD)
+            </div>
+            <div class="w-1/2 p-3 text-center text-red-600">{{ proctor.mdd }} g/cm³</div>
+        </div>
+        <div class="border-2 border-black flex font-bold text-sm mb-4">
+            <div class="w-1/2 p-3 bg-gray-100 text-center border-r border-black">
+                HUMEDAD ÓPTIMA (OMC)
+            </div>
+            <div class="w-1/2 p-3 text-center text-blue-600">{{ proctor.omc }} %</div>
+        </div>
+
+        <!-- Chart placeholder -->
+        <div class="section-title">CURVA DE COMPACTACIÓN</div>
+        <div class="border border-black h-64 flex items-center justify-center text-gray-400">
+            <canvas id="proctorChart" style="max-height: 240px;"></canvas>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 flex justify-between px-10 text-center text-xs">
+            <div class="w-40 border-t border-black pt-2"><strong>Tec. Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Jefe de Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Ing. Civil</strong></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== PAGE 6: CORTE DIRECTO ===== -->
+    {% if shear %}
+    <div class="a4-page" style="page-break-before: always;">
+        <!-- Header -->
+        <div class="flex items-center justify-between border border-black p-2 mb-4">
+            <div class="w-1/4 text-center border-r border-black p-2">
+                <h1 class="text-xl font-bold text-blue-900">GEOCENTER</h1>
+                <p class="text-xs">Laboratorio de Mecánica de Suelos</p>
+            </div>
+            <div class="flex-1 text-center">
+                <h2 class="text-lg font-bold">ENSAYO DE CORTE DIRECTO</h2>
+                <p class="text-xs">(ASTM D3080)</p>
+            </div>
+            <div class="w-1/4 text-center border-l border-black p-2 text-xs">
+                <p><strong>Pág:</strong> 06</p>
+            </div>
+        </div>
+
+        <!-- Specimen Results -->
+        <div class="section-title">RESULTADOS DEL ENSAYO</div>
+        <table class="text-xs mb-4">
+            <thead>
+                <tr class="header-cell">
+                    <th>Espécimen</th>
+                    <th>Esfuerzo Normal σ (kg/cm²)</th>
+                    <th>Esfuerzo Cortante Máx. τ (kg/cm²)</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                {% for p in shear.sigma_tau_points %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ p.sigma }}</td>
+                    <td class="font-bold">{{ p.tau }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Mohr-Coulomb Results -->
+        <div class="border-2 border-black flex font-bold text-sm mb-4">
+            <div class="w-1/2 p-3 bg-gray-100 text-center border-r border-black">
+                ÁNGULO DE FRICCIÓN (φ)
+            </div>
+            <div class="w-1/2 p-3 text-center text-purple-600">{{ shear.friction_angle }}°</div>
+        </div>
+        <div class="border-2 border-black flex font-bold text-sm mb-4">
+            <div class="w-1/2 p-3 bg-gray-100 text-center border-r border-black">
+                COHESIÓN (c)
+            </div>
+            <div class="w-1/2 p-3 text-center text-pink-600">{{ shear.cohesion }} kg/cm²</div>
+        </div>
+
+        <!-- Equation -->
+        <div class="text-center text-lg font-mono my-4 p-3 bg-gray-50 border border-gray-300 rounded">
+            τ = <span class="text-pink-600 font-bold">{{ shear.cohesion }}</span> + σ × tan(<span
+                class="text-purple-600 font-bold">{{ shear.friction_angle }}°</span>)
+        </div>
+
+        <!-- Chart placeholder -->
+        <div class="section-title">ENVOLVENTE DE FALLA (MOHR-COULOMB)</div>
+        <div class="border border-black h-64 flex items-center justify-center">
+            <canvas id="shearChart" style="max-height: 240px;"></canvas>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 flex justify-between px-10 text-center text-xs">
+            <div class="w-40 border-t border-black pt-2"><strong>Tec. Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Jefe de Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Ing. Civil</strong></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== PAGE 7: CONDICIONES DE CIMENTACION ===== -->
+    {% if foundation %}
+    <div class="a4-page" style="page-break-before: always;">
+        <!-- Header -->
+        <div class="flex items-center justify-between border border-black p-2 mb-4">
+            <div class="w-1/4 text-center border-r border-black p-2">
+                <h1 class="text-xl font-bold text-blue-900">GEOCENTER</h1>
+                <p class="text-xs">Laboratorio de Mecánica de Suelos</p>
+            </div>
+            <div class="flex-1 text-center">
+                <h2 class="text-lg font-bold">CAPACIDAD PORTANTE Y ASENTAMIENTOS</h2>
+                <p class="text-xs">(Método Meyerhof)</p>
+            </div>
+            <div class="w-1/4 text-center border-l border-black p-2 text-xs">
+                <p><strong>Pág:</strong> 07</p>
+            </div>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="section-title">PARÁMETROS DE ENTRADA</div>
+        <table class="text-xs mb-4">
+            <tr>
+                <td class="p-2 bg-gray-100 font-bold w-1/2">Cohesión (c)</td>
+                <td class="p-2 text-center">{{ foundation.inputs.c_kpa }} kPa</td>
+            </tr>
+            <tr>
+                <td class="p-2 bg-gray-100 font-bold">Ángulo de Fricción (φ)</td>
+                <td class="p-2 text-center">{{ foundation.inputs.phi }}°</td>
+            </tr>
+            <tr>
+                <td class="p-2 bg-gray-100 font-bold">Peso Unitario (γ)</td>
+                <td class="p-2 text-center">{{ foundation.inputs.gamma_kn }} kN/m³</td>
+            </tr>
+            <tr>
+                <td class="p-2 bg-gray-100 font-bold">Ancho de Cimentación (B)</td>
+                <td class="p-2 text-center">{{ foundation.inputs.B }} m</td>
+            </tr>
+            <tr>
+                <td class="p-2 bg-gray-100 font-bold">Profundidad de Fundación (Df)</td>
+                <td class="p-2 text-center">{{ foundation.inputs.Df }} m</td>
+            </tr>
+        </table>
+
+        <!-- Bearing Capacity Factors -->
+        <div class="section-title">FACTORES DE CAPACIDAD PORTANTE</div>
+        <table class="text-xs mb-4">
+            <thead>
+                <tr class="header-cell">
+                    <th>Nc</th>
+                    <th>Nq</th>
+                    <th>Nγ</th>
+                    <th>Sc</th>
+                    <th>Dc</th>
+                    <th>Fc</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                <tr>
+                    <td>{{ foundation.bearing_factors.Nc }}</td>
+                    <td>{{ foundation.bearing_factors.Nq }}</td>
+                    <td>{{ foundation.bearing_factors.Ng }}</td>
+                    <td>{{ foundation.shape_factors.Sc }}</td>
+                    <td>{{ foundation.depth_factors.Dc }}</td>
+                    <td>{{ foundation.compressibility.Fc }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Bearing Capacity Results -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="border-2 border-black p-3 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Última (qu)</div>
+                <div class="text-2xl font-bold text-gray-800">{{ foundation.bearing_capacity.qu_kpa }} kPa</div>
+                <div class="text-sm text-gray-500">({{ foundation.bearing_capacity.qu_kgcm2 }} kg/cm²)</div>
+            </div>
+            <div class="border-2 border-green-600 p-3 text-center bg-green-50">
+                <div class="text-xs text-gray-500 uppercase font-bold">Capacidad Admisible (qa)</div>
+                <div class="text-2xl font-bold text-green-700">{{ foundation.bearing_capacity.qa_kpa }} kPa</div>
+                <div class="text-sm text-gray-500">({{ foundation.bearing_capacity.qa_kgcm2 }} kg/cm²)</div>
+            </div>
+        </div>
+
+        <!-- Settlement Results -->
+        <div class="section-title">ASENTAMIENTO ELÁSTICO</div>
+        <table class="text-xs mb-4">
+            <thead>
+                <tr class="header-cell">
+                    <th>Centro (Sc)</th>
+                    <th>Esquina (Se)</th>
+                    <th>Diferencial (Ds)</th>
+                    <th>Máximo Permitido</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                <tr>
+                    <td>{{ foundation.settlement.Sc_cm }} cm</td>
+                    <td>{{ foundation.settlement.Se_cm }} cm</td>
+                    <td>{{ foundation.settlement.Ds_cm }} cm</td>
+                    <td>{{ foundation.settlement.Smax_cm }} cm</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Design Recommendation -->
+        <div class="border-2 border-teal-600 p-4 text-center bg-gradient-to-r from-teal-50 to-green-50">
+            <div class="text-xs text-gray-500 uppercase font-bold mb-1">CAPACIDAD PORTANTE DE DISEÑO</div>
+            <div class="text-3xl font-bold text-teal-700">{{ foundation.design.qa_design_kgcm2 }} kg/cm²</div>
+            <div class="text-sm text-gray-500">(Verificado por asentamiento)</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 flex justify-between px-10 text-center text-xs">
+            <div class="w-40 border-t border-black pt-2"><strong>Tec. Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Jefe de Laboratorio</strong></div>
+            <div class="w-40 border-t border-black pt-2"><strong>Ing. Civil</strong></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Scripts -->
+    <!-- Scripts -->
+    <script>
+        // --- GRAFICO 1: GRANULOMETRIA (Pagina 1) ---
+        const granData = {{ gran | tojson if gran else '[]' }};
+        const ctxGran = document.getElementById('printGranChart').getContext('2d');
+
+        if (granData.length > 0) {
+            // Preparar datos: X = Abertura (mm), Y = % Que Pasa
+            const scatterPoints = granData
+                .filter(row => row.opening_mm > 0) // Ignorar fondo para log scale
+                .map(row => ({
+                    x: row.opening_mm,
+                    y: row.percent_passing
+                }));
+
+            new Chart(ctxGran, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Curva Granulométrica',
+                        data: scatterPoints,
+                        showLine: true,
+                        borderColor: 'black',
+                        backgroundColor: 'black',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.4 // Suavizado
+                    }]
+                },
+                options: {
+                    animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'ABERTURA (mm)', font: { size: 10, weight: 'bold' } },
+                            min: 0.01,
+                            max: 100,
+                            image: false,
+                            grid: { color: '#ddd' },
+                            ticks: {
+                                callback: function (value) {
+                                    return [0.01, 0.1, 1, 10, 100].includes(value) ? value : '';
+                                }
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: '% QUE PASA', font: { size: 10, weight: 'bold' } },
+                            grid: { color: '#ddd' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                // Lineas verticales de referencia (Tamices principales)
+                                border4: { type: 'line', xMin: 4.75, xMax: 4.75, yMin: 0, yMax: 100, borderColor: 'gray', borderWidth: 1, borderDash: [2, 2], label: { content: '#4', display: true, position: 'start' } },
+                                border200: { type: 'line', xMin: 0.075, xMax: 0.075, yMin: 0, yMax: 100, borderColor: 'gray', borderWidth: 1, borderDash: [2, 2], label: { content: '#200', display: true, position: 'start' } }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- GRAFICO 2: LIMITES (Pagina 1 - Miniatura) ---
+        const limitsData = {{ limits | tojson if limits else '{}' }};
+        const ctxLimits = document.getElementById('printLimitsChart').getContext('2d');
+
+        if (limitsData.ll_points && limitsData.ll_points.length > 0) {
+            // Puntos flujo
+            const pts = limitsData.ll_points.map(p => ({ x: p.blows, y: p.moisture }));
+
+            // Linea tendencia (si hay ecuacion)
+            let trend = [];
+            if (limitsData.equation) {
+                // y = slope * ln(x) + intercept
+                // Dos puntos para la recta visual en escala logaritmica (10 y 100 golpes)
+                const x1 = 10;
+                const y1 = limitsData.equation.slope * Math.log(x1) + limitsData.equation.intercept;
+                const x2 = 100;
+                const y2 = limitsData.equation.slope * Math.log(x2) + limitsData.equation.intercept;
+                trend = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+            } else if (pts.length > 0) {
+                // Fallback simple si no hay ecuacion (conecta extremos)
+                trend = pts;
+            }
+
+            const llVal = limitsData.LL || 0;
+
+            new Chart(ctxLimits, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Puntos',
+                            data: pts,
+                            backgroundColor: 'blue',
+                            borderColor: 'blue',
+                            pointRadius: 4,
+                        },
+                        {
+                            label: 'Tendencia',
+                            data: trend,
+                            showLine: true,
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            min: 10, max: 100,
+                            grid: { display: false },
+                            ticks: { display: true, callback: function (val) { return [10, 25, 50, 100].includes(val) ? val : '' } }
+                        },
+                        y: {
+                            min: llVal - 10, max: llVal + 10, // Zoom automatico
+                            grid: { display: true }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                limitLine: {
+                                    type: 'line',
+                                    xMin: 25, xMax: 25,
+                                    yMin: llVal - 20, yMax: llVal + 20,
+                                    borderColor: 'red', borderWidth: 1,
+                                    label: { content: 'LL', display: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- GRAFICO 3: LIMITES (Pagina 3 - Detalle) ---
+        // Reutilizar la logica de arriba si es necesario o dejar el bloque existente
+        {% if limits and limits.ll_points %}
+        const llPoints3 = {{ limits.ll_points | tojson }};
+        const llEq = {{ limits.equation | tojson if limits.equation else 'null' }};
+        const llVal3 = {{ limits.LL }};
+
+        const ctxL3 = document.getElementById('page3LLChart').getContext('2d');
+
+        // Generate Trendline Points (10 to 100)
+        let trendPoints = [];
+        if (llEq) {
+            const x1 = 10;
+            const y1 = llEq.slope * Math.log(x1) + llEq.intercept;
+            const x2 = 100;
+            const y2 = llEq.slope * Math.log(x2) + llEq.intercept;
+            trendPoints = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+        }
+
+        new Chart(ctxL3, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Puntos',
+                        data: llPoints3.map(p => ({ x: p.blows, y: p.moisture })),
+                        backgroundColor: 'blue',
+                        borderColor: 'blue',
+                        pointRadius: 5,
+                        pointStyle: 'diamond'
+                    },
+                    {
+                        label: 'Tendencia',
+                        data: trendPoints,
+                        showLine: true,
+                        borderColor: 'black',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'logarithmic',
+                        min: 10, max: 100,
+                        title: { display: true, text: 'NÚMERO DE GOLPES' },
+                        grid: { color: '#eee' },
+                        ticks: {
+                            callback: function (value) { return [10, 20, 30, 40, 50, 100].includes(value) ? value : ''; }
+                        }
+                    },
+                    y: {
+                        title: { display: true, text: 'HUMEDAD (%)' },
+                        min: Math.floor(llVal3 - 5), max: Math.ceil(llVal3 + 5)
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                xMin: 25, xMax: 25,
+                                yMin: 0, yMax: llVal3,
+                                borderColor: 'blue', borderWidth: 1, borderDash: [5, 5]
+                            },
+                            line2: {
+                                type: 'line',
+                                xMin: 10, xMax: 25,
+                                yMin: llVal3, yMax: llVal3,
+                                borderColor: 'blue', borderWidth: 1, borderDash: [5, 5]
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+
+</html>

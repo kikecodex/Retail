@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block header %}🤖 Modo Automático{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg">
+        <h1 class="text-2xl font-bold">🤖 Generador Automático de Reportes</h1>
+        <p class="text-emerald-100 mt-1">Selecciona el tipo de suelo → ajusta parámetros (opcional) → genera reporte
+            completo de 8 páginas</p>
+        <div class="flex gap-3 mt-3">
+            <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold">Terzaghi + Meyerhof</span>
+            <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold">8 Páginas ASTM</span>
+            <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold">Datos Sintéticos</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT: Parameters Panel -->
+        <div class="lg:col-span-1 space-y-4">
+
+            <!-- SUCS Selector -->
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-emerald-500">
+                <h3 class="font-bold text-gray-700 mb-3">🏷️ Tipo de Suelo (SUCS)</h3>
+                <select id="sucsSelect" onchange="loadSoilDefaults()"
+                    class="w-full p-3 border-2 border-emerald-300 rounded-lg text-lg font-bold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">-- Seleccionar --</option>
+                    {% for symbol, data in soil_params.items() %}
+                    <option value="{{ symbol }}">{{ symbol }} — {{ data.name }}</option>
+                    {% endfor %}
+                </select>
+                <p id="soilCategory" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+
+            <!-- Soil Parameters -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-gray-700">📐 Parámetros del Suelo</h3>
+                    <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full"
+                        id="modeIndicator">Automático</span>
+                </div>
+                <p class="text-xs text-gray-400 mb-3">Se autocargan de la CARTILLA. Edita si tienes valores reales.</p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-gray-500">φ (°)</label>
+                        <input type="number" id="phi" step="0.1"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="25.0">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">c (kg/cm²)</label>
+                        <input type="number" id="cohesion" step="0.001"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="0.05">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">LL (%)</label>
+                        <input type="number" id="ll" step="0.1" class="w-full p-2 border rounded-lg text-sm param-input"
+                            oninput="markManual(this)" placeholder="30">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">LP (%)</label>
+                        <input type="number" id="pl" step="0.1" class="w-full p-2 border rounded-lg text-sm param-input"
+                            oninput="markManual(this)" placeholder="20">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Humedad (%)</label>
+                        <input type="number" id="humedad" step="0.1"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="10">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Gs</label>
+                        <input type="number" id="gs" step="0.01"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="2.65">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">MDD (g/cm³)</label>
+                        <input type="number" id="mdd" step="0.01"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="1.75">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">OMC (%)</label>
+                        <input type="number" id="omc" step="0.1"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="12">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">% Finos</label>
+                        <input type="number" id="fines_pct" step="0.1"
+                            class="w-full p-2 border rounded-lg text-sm param-input" oninput="markManual(this)"
+                            placeholder="50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Foundation Parameters -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <h3 class="font-bold text-gray-700 mb-3">🏗️ Cimentación</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-gray-500">Ancho B (m)</label>
+                        <input type="number" id="B" step="0.1" value="1.0" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Largo L (m)</label>
+                        <input type="number" id="L" step="0.1" value="1.0" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">Prof. Df (m)</label>
+                        <input type="number" id="Df" step="0.1" value="1.5"
+                            class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">FS</label>
+                        <input type="number" id="FS" step="0.5" value="3" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs text-gray-500">Tipo</label>
+                        <select id="foundation_type" class="w-full p-2 border rounded-lg text-sm">
+                            <option value="square">Cuadrada</option>
+                            <option value="strip">Corrida</option>
+                            <option value="circular">Circular</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Info -->
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <h3 class="font-bold text-gray-700 mb-3">📁 Datos del Proyecto</h3>
+                <div class="space-y-2">
+                    <input type="text" id="proyecto" placeholder="Nombre del proyecto"
+                        class="w-full p-2 border rounded-lg text-sm">
+                    <input type="text" id="ubicacion" placeholder="Ubicación"
+                        class="w-full p-2 border rounded-lg text-sm">
+                    <input type="text" id="solicitante" placeholder="Solicitante"
+                        class="w-full p-2 border rounded-lg text-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="calicata" placeholder="Calicata (C-01)" value="C-01"
+                            class="w-full p-2 border rounded-lg text-sm">
+                        <input type="text" id="profundidad" placeholder="Prof. (1.5 m)" value="1.5 m"
+                            class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="muestra" placeholder="Muestra (M-01)" value="M-01"
+                            class="w-full p-2 border rounded-lg text-sm">
+                        <input type="text" id="tecnico" placeholder="Técnico" value="J.L.C."
+                            class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <input type="text" id="fecha" placeholder="Fecha" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+            </div>
+
+            <!-- GENERATE BUTTON -->
+            <button onclick="generateReport()" id="btnGenerate"
+                class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                🚀 GENERAR REPORTE COMPLETO
+            </button>
+        </div>
+
+        <!-- RIGHT: Results Panel -->
+        <div class="lg:col-span-2">
+            <!-- Summary Cards (hidden until generation) -->
+            <div id="summaryPanel" class="hidden mb-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white rounded-xl p-4 shadow-md border-t-4 border-blue-500 text-center">
+                        <div class="text-xs text-gray-400">SUCS</div>
+                        <div class="text-2xl font-bold text-blue-600" id="sumSucs">--</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-md border-t-4 border-amber-500 text-center">
+                        <div class="text-xs text-gray-400">φ / c</div>
+                        <div class="text-lg font-bold text-amber-600" id="sumShear">--</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-md border-t-4 border-emerald-500 text-center">
+                        <div class="text-xs text-gray-400">qa Terzaghi</div>
+                        <div class="text-lg font-bold text-emerald-600" id="sumTerzaghi">--</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-md border-t-4 border-purple-500 text-center">
+                        <div class="text-xs text-gray-400">qa Meyerhof</div>
+                        <div class="text-lg font-bold text-purple-600" id="sumMeyerhof">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Preview -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden" style="min-height: 600px;">
+                <div class="bg-gray-100 px-4 py-3 flex items-center justify-between border-b">
+                    <span class="text-sm font-semibold text-gray-600">📄 Vista Previa del Reporte</span>
+                    <div class="flex gap-2">
+                        <button onclick="printReport()" id="btnPrint"
+                            class="hidden px-3 py-1 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition">
+                            🖨️ Imprimir
+                        </button>
+                        <button onclick="downloadReport()" id="btnDownload"
+                            class="hidden px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs hover:bg-emerald-600 transition">
+                            💾 Descargar HTML
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Placeholder -->
+                <div id="reportPlaceholder" class="flex flex-col items-center justify-center py-20 text-gray-400">
+                    <div class="text-6xl mb-4">📋</div>
+                    <p class="text-lg font-medium">Selecciona un tipo de suelo y haz clic en</p>
+                    <p class="text-lg font-bold text-emerald-500">🚀 GENERAR REPORTE COMPLETO</p>
+                    <p class="text-sm mt-2">El reporte de 8 páginas aparecerá aquí</p>
+                </div>
+
+                <!-- Loading -->
+                <div id="reportLoading" class="hidden flex flex-col items-center justify-center py-20">
+                    <div
+                        class="animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-500 mb-4">
+                    </div>
+                    <p class="text-lg font-medium text-gray-500" id="loadingText">Generando datos sintéticos...</p>
+                    <div class="mt-3 w-64 bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Report iframe -->
+                <iframe id="reportFrame" class="hidden w-full border-0" style="height: 800px;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Soil parameters from CARTILLA (passed from backend)
+    const SOIL_DB = {{ soil_params | tojson }};
+
+    let generatedHtml = null;
+
+    function avg(range) {
+        if (!range) return '';
+        return ((range[0] + range[1]) / 2).toFixed(2);
+    }
+
+    function loadSoilDefaults() {
+        const sucs = document.getElementById('sucsSelect').value;
+        if (!sucs || !SOIL_DB[sucs]) return;
+
+        const soil = SOIL_DB[sucs];
+        document.getElementById('soilCategory').textContent = `Categoría: ${soil.category} — ${soil.name}`;
+
+        // Auto-fill with CARTILLA averages
+        document.getElementById('phi').value = avg(soil.phi);
+        document.getElementById('cohesion').value = avg(soil.cohesion);
+        document.getElementById('ll').value = soil.ll ? avg(soil.ll) : '';
+        document.getElementById('pl').value = soil.lp ? avg(soil.lp) : '';
+        document.getElementById('humedad').value = avg(soil.humedad);
+        document.getElementById('gs').value = soil.peso_especifico ? avg(soil.peso_especifico) : '2.65';
+        document.getElementById('mdd').value = avg(soil.gamma_seco);
+        document.getElementById('omc').value = avg(soil.humedad);
+        document.getElementById('fines_pct').value = soil.finos_percent ? avg(soil.finos_percent) : '50';
+
+        // Reset manual indicators
+        document.querySelectorAll('.param-input').forEach(el => {
+            el.classList.remove('border-amber-400', 'bg-amber-50');
+            el.classList.add('border-emerald-300', 'bg-emerald-50');
+        });
+        document.getElementById('modeIndicator').textContent = 'Automático';
+        document.getElementById('modeIndicator').className = 'text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full';
+    }
+
+    function markManual(el) {
+        el.classList.remove('border-emerald-300', 'bg-emerald-50');
+        el.classList.add('border-amber-400', 'bg-amber-50');
+        document.getElementById('modeIndicator').textContent = 'Híbrido';
+        document.getElementById('modeIndicator').className = 'text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full';
+    }
+
+    async function generateReport() {
+        const sucs = document.getElementById('sucsSelect').value;
+        if (!sucs) {
+            alert('Selecciona un tipo de suelo primero');
+            return;
+        }
+
+        const btn = document.getElementById('btnGenerate');
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Generando...';
+
+        // Show loading
+        document.getElementById('reportPlaceholder').classList.add('hidden');
+        document.getElementById('reportFrame').classList.add('hidden');
+        document.getElementById('reportLoading').classList.remove('hidden');
+
+        // Animate progress
+        const progress = document.getElementById('progressBar');
+        const loadingText = document.getElementById('loadingText');
+
+        const steps = [
+            [10, 'Generando datos sintéticos...'],
+            [30, 'Calculando granulometría y límites...'],
+            [50, 'Procesando corte directo y proctor...'],
+            [70, 'Calculando Terzaghi y Meyerhof...'],
+            [85, 'Generando reporte HTML...'],
+        ];
+
+        let stepIdx = 0;
+        const progressInterval = setInterval(() => {
+            if (stepIdx < steps.length) {
+                progress.style.width = steps[stepIdx][0] + '%';
+                loadingText.textContent = steps[stepIdx][1];
+                stepIdx++;
+            }
+        }, 600);
+
+        try {
+            const payload = {
+                sucs,
+                phi: document.getElementById('phi').value || 25,
+                cohesion: document.getElementById('cohesion').value || 0.05,
+                ll: document.getElementById('ll').value || 30,
+                pl: document.getElementById('pl').value || 20,
+                humedad: document.getElementById('humedad').value || 10,
+                gs: document.getElementById('gs').value || 2.65,
+                mdd: document.getElementById('mdd').value || 1.75,
+                omc: document.getElementById('omc').value || 12,
+                fines_pct: document.getElementById('fines_pct').value || 50,
+                B: document.getElementById('B').value,
+                L: document.getElementById('L').value,
+                Df: document.getElementById('Df').value,
+                FS: document.getElementById('FS').value,
+                foundation_type: document.getElementById('foundation_type').value,
+                proyecto: document.getElementById('proyecto').value,
+                ubicacion: document.getElementById('ubicacion').value,
+                solicitante: document.getElementById('solicitante').value,
+                calicata: document.getElementById('calicata').value,
+                profundidad: document.getElementById('profundidad').value,
+                muestra: document.getElementById('muestra').value,
+                tecnico: document.getElementById('tecnico').value,
+                fecha: document.getElementById('fecha').value || new Date().toLocaleDateString('es-PE'),
+            };
+
+            const resp = await fetch('/api/generar_reporte', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await resp.json();
+
+            clearInterval(progressInterval);
+
+            if (data.success) {
+                progress.style.width = '100%';
+                loadingText.textContent = '✅ ¡Reporte generado!';
+
+                generatedHtml = data.html;
+
+                // Update summary cards
+                const s = data.summary;
+                document.getElementById('sumSucs').textContent = s.sucs;
+                document.getElementById('sumShear').textContent = `${Number(s.phi).toFixed(1)}° / ${Number(s.cohesion).toFixed(3)}`;
+                document.getElementById('sumTerzaghi').textContent = `${Number(s.qa_terzaghi).toFixed(2)} kg/cm²`;
+                document.getElementById('sumMeyerhof').textContent = `${Number(s.qa_meyerhof).toFixed(2)} kg/cm²`;
+                document.getElementById('summaryPanel').classList.remove('hidden');
+
+                // Show report in iframe
+                setTimeout(() => {
+                    document.getElementById('reportLoading').classList.add('hidden');
+                    const iframe = document.getElementById('reportFrame');
+                    iframe.classList.remove('hidden');
+                    iframe.srcdoc = data.html;
+                    document.getElementById('btnPrint').classList.remove('hidden');
+                    document.getElementById('btnDownload').classList.remove('hidden');
+                }, 500);
+            } else {
+                alert('Error: ' + data.error);
+                document.getElementById('reportLoading').classList.add('hidden');
+                document.getElementById('reportPlaceholder').classList.remove('hidden');
+            }
+
+        } catch (err) {
+            clearInterval(progressInterval);
+            alert('Error de conexión: ' + err.message);
+            document.getElementById('reportLoading').classList.add('hidden');
+            document.getElementById('reportPlaceholder').classList.remove('hidden');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '🚀 GENERAR REPORTE COMPLETO';
+    }
+
+    function printReport() {
+        if (!generatedHtml) return;
+        const win = window.open('', '_blank');
+        win.document.write(generatedHtml);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+
+    function downloadReport() {
+        if (!generatedHtml) return;
+        const blob = new Blob([generatedHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const calicata = document.getElementById('calicata').value || 'C-01';
+        a.href = url;
+        a.download = `Reporte_${calicata}_${document.getElementById('sucsSelect').value}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+</script>
+{% endblock %}

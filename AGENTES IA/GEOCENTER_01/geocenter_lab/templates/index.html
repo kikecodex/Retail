@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block header %}Bienvenido{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto text-center mt-10">
+    <div class="bg-white p-10 rounded-2xl shadow-lg border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-4xl font-bold text-gray-900">Geocenter Lab</h1>
+            <a href="/reporte_print" target="_blank"
+                class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-700 shadow flex gap-2">
+                🖨️ Generar Reporte PDF
+            </a>
+        </div>
+        <p class="text-lg text-gray-600 mb-6">Sistema de cálculos geotécnicos para laboratorio de suelos.</p>
+
+        <!-- Status Panel -->
+        <div id="status-panel" class="bg-gray-50 rounded-xl p-4 mb-8 text-left">
+            <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <span>📊</span> Estado de Ensayos
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="test-status">
+                <div class="flex items-center gap-2" id="st-gran">
+                    <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-600">Granulometría</span>
+                </div>
+                <div class="flex items-center gap-2" id="st-limits">
+                    <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-600">Límites</span>
+                </div>
+                <div class="flex items-center gap-2" id="st-class">
+                    <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-600">Clasificación</span>
+                </div>
+                <div class="flex items-center gap-2" id="st-shear">
+                    <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-600">Corte Directo</span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-3">
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    Calculado</span>
+                <span class="ml-3 inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                    Pendiente</span>
+            </p>
+        </div>
+
+        <!-- Workflow Diagram -->
+        <div class="bg-blue-50 rounded-xl p-4 mb-8 text-left border border-blue-100">
+            <h3 class="font-bold text-blue-700 mb-2">📐 Flujo de Cálculos</h3>
+            <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
+                <span class="px-3 py-1 bg-blue-100 rounded-lg font-medium">Granulometría</span>
+                <span class="text-blue-400">+</span>
+                <span class="px-3 py-1 bg-orange-100 rounded-lg font-medium">Límites</span>
+                <span class="text-blue-400">→</span>
+                <span class="px-3 py-1 bg-green-100 rounded-lg font-medium">Clasificación SUCS</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2 text-sm mt-2">
+                <span class="px-3 py-1 bg-purple-100 rounded-lg font-medium">Corte Directo (c, φ)</span>
+                <span class="text-blue-400">→</span>
+                <span class="px-3 py-1 bg-yellow-100 rounded-lg font-medium">Capacidad Portante</span>
+            </div>
+        </div>
+
+        <!-- Test Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- ENSAYOS BASE -->
+            <a href="/granulometria"
+                class="p-6 bg-blue-50 rounded-xl border border-blue-100 hover:shadow-md transition-all hover:-translate-y-1 block group relative">
+                <span
+                    class="absolute top-2 right-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded font-bold">BASE</span>
+                <div class="text-4xl mb-2">📊</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-blue-600">Granulometría</h3>
+                <p class="text-xs text-blue-600 font-medium mt-1">ASTM D422</p>
+                <p class="text-sm text-gray-500 mt-2">Distribución de tamaños, Cu, Cc, curva granulométrica.</p>
+            </a>
+
+            <a href="/limites"
+                class="p-6 bg-orange-50 rounded-xl border border-orange-100 hover:shadow-md transition-all hover:-translate-y-1 block group relative">
+                <span
+                    class="absolute top-2 right-2 text-xs bg-orange-600 text-white px-2 py-0.5 rounded font-bold">BASE</span>
+                <div class="text-4xl mb-2">🧱</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-orange-600">Límites de Atterberg</h3>
+                <p class="text-xs text-orange-600 font-medium mt-1">ASTM D4318</p>
+                <p class="text-sm text-gray-500 mt-2">Límite Líquido (LL), Plástico (LP), Índice de Plasticidad (IP).
+                </p>
+            </a>
+
+            <a href="/humedad"
+                class="p-6 bg-cyan-50 rounded-xl border border-cyan-100 hover:shadow-md transition-all hover:-translate-y-1 block group">
+                <div class="text-4xl mb-2">💧</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-cyan-600">Contenido de Humedad</h3>
+                <p class="text-xs text-cyan-600 font-medium mt-1">ASTM D2216</p>
+                <p class="text-sm text-gray-500 mt-2">W(%) = [(Wh - Ws) / Ws] × 100</p>
+            </a>
+
+            <!-- ENSAYOS DERIVADOS -->
+            <a href="/clasificacion"
+                class="p-6 bg-green-50 rounded-xl border border-green-100 hover:shadow-md transition-all hover:-translate-y-1 block group relative">
+                <span
+                    class="absolute top-2 right-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded font-bold">DERIVADO</span>
+                <div class="text-4xl mb-2">🏷️</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-green-600">Clasificación SUCS</h3>
+                <p class="text-xs text-green-600 font-medium mt-1">ASTM D2487</p>
+                <p class="text-sm text-gray-500 mt-2">Requiere: Granulometría + Límites</p>
+            </a>
+
+            <a href="/peso_especifico"
+                class="p-6 bg-indigo-50 rounded-xl border border-indigo-100 hover:shadow-md transition-all hover:-translate-y-1 block group">
+                <div class="text-4xl mb-2">⚖️</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-indigo-600">Peso Específico</h3>
+                <p class="text-xs text-indigo-600 font-medium mt-1">ASTM D854</p>
+                <p class="text-sm text-gray-500 mt-2">Gs = Ws / (Ws + Wfw - Wfws)</p>
+            </a>
+
+            <a href="/proctor"
+                class="p-6 bg-red-50 rounded-xl border border-red-100 hover:shadow-md transition-all hover:-translate-y-1 block group">
+                <div class="text-4xl mb-2">🔨</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-red-600">Proctor Modificado</h3>
+                <p class="text-xs text-red-600 font-medium mt-1">ASTM D1557</p>
+                <p class="text-sm text-gray-500 mt-2">γd máx, Humedad óptima, curva de compactación.</p>
+            </a>
+
+            <!-- ENSAYOS DE RESISTENCIA -->
+            <a href="/corte"
+                class="p-6 bg-purple-50 rounded-xl border border-purple-100 hover:shadow-md transition-all hover:-translate-y-1 block group relative">
+                <span
+                    class="absolute top-2 right-2 text-xs bg-purple-600 text-white px-2 py-0.5 rounded font-bold">BASE</span>
+                <div class="text-4xl mb-2">✂️</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-purple-600">Corte Directo</h3>
+                <p class="text-xs text-purple-600 font-medium mt-1">ASTM D3080</p>
+                <p class="text-sm text-gray-500 mt-2">τ = c + σ·tan(φ) → Cohesión y ángulo de fricción.</p>
+            </a>
+
+            <a href="/cbr"
+                class="p-6 bg-yellow-50 rounded-xl border border-yellow-100 hover:shadow-md transition-all hover:-translate-y-1 block group relative">
+                <span
+                    class="absolute top-2 right-2 text-xs bg-yellow-600 text-white px-2 py-0.5 rounded font-bold">DERIVADO</span>
+                <div class="text-4xl mb-2">🏗️</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-yellow-600">Capacidad Portante</h3>
+                <p class="text-xs text-yellow-600 font-medium mt-1">Terzaghi (1943)</p>
+                <p class="text-sm text-gray-500 mt-2">Requiere: c, φ del Corte Directo</p>
+            </a>
+
+            <a href="/cimentacion"
+                class="p-6 bg-teal-50 rounded-xl border border-teal-100 hover:shadow-md transition-all hover:-translate-y-1 block group">
+                <div class="text-4xl mb-2">🏛️</div>
+                <h3 class="font-bold text-gray-800 group-hover:text-teal-600">Cimentaciones (Meyerhof)</h3>
+                <p class="text-xs text-teal-600 font-medium mt-1">Meyerhof + Asentamientos</p>
+                <p class="text-sm text-gray-500 mt-2">qu, qa, asentamientos elásticos.</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load test status on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('/estado');
+            const data = await response.json();
+
+            // Update indicators
+            updateIndicator('st-gran', data.has_granulometry);
+            updateIndicator('st-limits', data.has_limits);
+            updateIndicator('st-class', data.can_classify);
+            updateIndicator('st-shear', data.has_shear);
+        } catch (e) {
+            console.log('Could not load status');
+        }
+    });
+
+    function updateIndicator(id, isComplete) {
+        const el = document.getElementById(id);
+        if (el) {
+            const dot = el.querySelector('span:first-child');
+            const text = el.querySelector('span:last-child');
+            if (isComplete) {
+                dot.classList.remove('bg-gray-300');
+                dot.classList.add('bg-green-500');
+                text.classList.remove('text-gray-600');
+                text.classList.add('text-green-700', 'font-medium');
+            }
+        }
+    }
+</script>
+{% endblock %}

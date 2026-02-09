@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% block header %}Ensayo Corte Directo (ASTM D3080){% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Corte Directo</h2>
+    <button onclick="document.getElementById('methodologyModalShear').classList.remove('hidden')"
+        class="text-purple-600 hover:text-purple-800 text-sm font-semibold flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Metodología
+    </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+    <!-- LEFT: Input Panel -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-gray-700">✂️ Datos de Especímenes</h3>
+            <button onclick="calculateShear()"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition-all font-semibold flex items-center gap-2">
+                ⚡ Calcular
+            </button>
+        </div>
+
+        <div class="p-6 overflow-auto flex-1 space-y-6">
+            <!-- Specimen Dimensions -->
+            <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                <h4 class="text-sm font-bold text-purple-600 uppercase mb-3">Dimensiones del Espécimen</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Lado (cm)</label>
+                        <input type="number" step="0.1" id="specSide" value="6"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Altura (cm)</label>
+                        <input type="number" step="0.01" id="specHeight" value="2.544"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 p-2 border">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specimens -->
+            <div>
+                <h4 class="text-sm font-bold text-gray-600 uppercase mb-3">Especímenes (3 puntos mínimo)</h4>
+                <div class="space-y-4" id="specimensContainer">
+                    <!-- Specimen A -->
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-purple-600">Espécimen A</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Normal σ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.1" class="spec-normal w-full p-2 border rounded"
+                                    value="0.5" data-spec="A">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Cortante Máx. τ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.01" class="spec-shear w-full p-2 border rounded"
+                                    value="0.27" data-spec="A">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Specimen B -->
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-purple-600">Espécimen B</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Normal σ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.1" class="spec-normal w-full p-2 border rounded"
+                                    value="1.0" data-spec="B">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Cortante Máx. τ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.01" class="spec-shear w-full p-2 border rounded"
+                                    value="0.51" data-spec="B">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Specimen C -->
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-purple-600">Espécimen C</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Normal σ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.1" class="spec-normal w-full p-2 border rounded"
+                                    value="1.5" data-spec="C">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500">Esfuerzo Cortante Máx. τ
+                                    (kg/cm²)</label>
+                                <input type="number" step="0.01" class="spec-shear w-full p-2 border rounded"
+                                    value="0.73" data-spec="C">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Results & Chart -->
+    <div class="flex flex-col gap-6 h-full">
+        <!-- Main Results -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-purple-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Ángulo de Fricción (φ)</div>
+                <div class="text-3xl font-bold text-gray-800" id="res-phi">--</div>
+                <div class="text-xs text-gray-400">grados (°)</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-pink-500 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">Cohesión (c)</div>
+                <div class="text-3xl font-bold text-gray-800" id="res-c">--</div>
+                <div class="text-xs text-gray-400">kg/cm²</div>
+            </div>
+        </div>
+
+        <!-- Mohr-Coulomb Chart -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 flex-1 p-4 flex flex-col">
+            <h3 class="font-bold text-gray-700 mb-2">📈 Envolvente de Falla (Mohr-Coulomb)</h3>
+            <div class="flex-1 relative w-full h-full min-h-[300px]">
+                <canvas id="shearChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Equation Display -->
+        <div class="bg-white rounded-xl shadow border border-gray-100 p-4">
+            <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Ecuación de Falla</h4>
+            <div class="text-center text-xl font-mono bg-gray-50 p-3 rounded border">
+                τ = <span id="eq-c" class="text-pink-600 font-bold">--</span> + σ × tan(<span id="eq-phi"
+                    class="text-purple-600 font-bold">--</span>°)
+            </div>
+        </div>
+
+        <!-- Validation Panel -->
+        <div id="validationPanel" class="hidden bg-white rounded-xl shadow border border-gray-100 p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="text-sm font-bold text-gray-500 uppercase">📊 Validación vs CARTILLA</h4>
+                <select id="sucs-select" class="text-sm border rounded px-2 py-1" onchange="validateAgainstSUCS()">
+                    <option value="">-- Seleccionar Suelo --</option>
+                    <option value="SM">SM - Arena Limosa</option>
+                    <option value="ML">ML - Limo</option>
+                    <option value="SC">SC - Arena Arcillosa</option>
+                    <option value="CL">CL - Arcilla Baja Plasticidad</option>
+                    <option value="GM">GM - Grava Limosa</option>
+                    <option value="GC">GC - Grava Arcillosa</option>
+                    <option value="SW">SW - Arena Bien Graduada</option>
+                    <option value="SP">SP - Arena Mal Graduada</option>
+                    <option value="MH">MH - Limo Elástico</option>
+                    <option value="CH">CH - Arcilla Alta Plasticidad</option>
+                </select>
+            </div>
+            <div id="validation-results" class="space-y-2 text-sm">
+                <p class="text-gray-500 italic">Seleccione un tipo de suelo para validar</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Methodology Modal -->
+<div id="methodologyModalShear"
+    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Metodología: Corte Directo</h3>
+            <div class="mt-2 px-7 py-3 text-left space-y-3">
+                <p class="text-sm text-gray-500">
+                    Ensayo de corte directo según ASTM D3080 para determinar parámetros de resistencia.
+                </p>
+                <ul class="list-disc text-sm text-gray-600 pl-5 space-y-1">
+                    <li><strong>Criterio de Mohr-Coulomb:</strong>
+                        <span class="font-mono bg-gray-100 px-1">τ = c + σ·tan(φ)</span>
+                    </li>
+                    <li><strong>Regresión Lineal:</strong> Se grafican pares (σ, τmax) y se ajusta una recta.</li>
+                    <li><strong>c (Cohesión):</strong> Intercepto de la recta con el eje τ.</li>
+                    <li><strong>φ (Ángulo de Fricción):</strong> φ = atan(pendiente)</li>
+                </ul>
+                <div class="text-xs bg-purple-50 p-2 rounded border border-purple-200 mt-2">
+                    <strong>Calibración:</strong> Datos extraídos de ENSAYOS.xlsx, hoja "CORTE DIRECTO-1".
+                </div>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button onclick="document.getElementById('methodologyModalShear').classList.add('hidden')"
+                    class="px-4 py-2 bg-purple-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-purple-700">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chartInstance = null;
+
+    function initChart() {
+        const ctx = document.getElementById('shearChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Puntos (σ, τmax)',
+                        data: [],
+                        backgroundColor: '#9333ea',
+                        pointRadius: 8
+                    },
+                    {
+                        label: 'Envolvente de Falla',
+                        data: [],
+                        type: 'line',
+                        borderColor: '#ec4899',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Esfuerzo Normal σ (kg/cm²)' },
+                        beginAtZero: true
+                    },
+                    y: {
+                        title: { display: true, text: 'Esfuerzo Cortante τ (kg/cm²)' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    async function calculateShear() {
+        const specimens = [];
+        document.querySelectorAll('.spec-normal').forEach((el, i) => {
+            const spec = el.dataset.spec;
+            const normal = parseFloat(el.value) || 0;
+            const shear = parseFloat(document.querySelector(`.spec-shear[data-spec="${spec}"]`).value) || 0;
+            specimens.push({
+                normal_stress: normal,
+                shear_stress_max: shear
+            });
+        });
+
+        const data = {
+            specimen_side_cm: parseFloat(document.getElementById('specSide').value) || 6,
+            specimen_height_cm: parseFloat(document.getElementById('specHeight').value) || 2.5,
+            specimens: specimens
+        };
+
+        const response = await fetch('/corte', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.error) {
+            alert(result.error);
+            return;
+        }
+
+        updateResults(result.results);
+    }
+
+    function updateResults(r) {
+        // Main results
+        document.getElementById('res-phi').innerText = r.friction_angle;
+        document.getElementById('res-c').innerText = r.cohesion;
+
+        // Equation
+        document.getElementById('eq-c').innerText = r.cohesion;
+        document.getElementById('eq-phi').innerText = r.friction_angle;
+
+        // Update chart
+        const points = r.sigma_tau_points.map(p => ({ x: p.sigma, y: p.tau }));
+        chartInstance.data.datasets[0].data = points;
+
+        // Draw failure envelope line
+        if (points.length >= 2) {
+            const c = r.cohesion;
+            const tan_phi = Math.tan(r.friction_angle * Math.PI / 180);
+            const maxSigma = Math.max(...points.map(p => p.x)) * 1.2;
+            chartInstance.data.datasets[1].data = [
+                { x: 0, y: c },
+                { x: maxSigma, y: c + maxSigma * tan_phi }
+            ];
+        }
+
+        chartInstance.update();
+    }
+
+    // Store last calculated values for validation
+    let lastPhi = null;
+    let lastCohesion = null;
+
+    async function validateAgainstSUCS() {
+        const sucs = document.getElementById('sucs-select').value;
+        const resultsDiv = document.getElementById('validation-results');
+
+        if (!sucs || lastPhi === null) {
+            resultsDiv.innerHTML = '<p class="text-gray-500 italic">Seleccione un tipo de suelo para validar</p>';
+            return;
+        }
+
+        const response = await fetch('/validar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sucs: sucs,
+                params: {
+                    phi: lastPhi,
+                    cohesion: lastCohesion
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        let html = `<div class="font-medium mb-2">${result.soil_name} (${result.category})</div>`;
+
+        // Show each validation detail
+        result.details.forEach(d => {
+            let bgClass = 'bg-green-100 text-green-800';
+            let icon = '✅';
+            if (d.status === 'warning') {
+                bgClass = 'bg-yellow-100 text-yellow-800';
+                icon = '⚠️';
+            } else if (d.status === 'error') {
+                bgClass = 'bg-red-100 text-red-800';
+                icon = '❌';
+            }
+            html += `<div class="p-2 rounded ${bgClass}">${icon} ${d.message}</div>`;
+        });
+
+        // Summary
+        if (result.valid) {
+            html += '<div class="mt-2 p-2 bg-green-200 text-green-900 rounded font-bold text-center">✅ VÁLIDO para ' + sucs + '</div>';
+        } else {
+            html += '<div class="mt-2 p-2 bg-red-200 text-red-900 rounded font-bold text-center">❌ Fuera de rango para ' + sucs + '</div>';
+        }
+
+        resultsDiv.innerHTML = html;
+    }
+
+    // Override updateResults to store values and show validation panel
+    const originalUpdateResults = updateResults;
+    function updateResults(r) {
+        // Store values for validation
+        lastPhi = r.friction_angle;
+        lastCohesion = r.cohesion;
+
+        // Call original function
+        // Main results
+        document.getElementById('res-phi').innerText = r.friction_angle;
+        document.getElementById('res-c').innerText = r.cohesion;
+
+        // Equation
+        document.getElementById('eq-c').innerText = r.cohesion;
+        document.getElementById('eq-phi').innerText = r.friction_angle;
+
+        // Update chart
+        const points = r.sigma_tau_points.map(p => ({ x: p.sigma, y: p.tau }));
+        chartInstance.data.datasets[0].data = points;
+
+        // Draw failure envelope line
+        if (points.length >= 2) {
+            const c = r.cohesion;
+            const tan_phi = Math.tan(r.friction_angle * Math.PI / 180);
+            const maxSigma = Math.max(...points.map(p => p.x)) * 1.2;
+            chartInstance.data.datasets[1].data = [
+                { x: 0, y: c },
+                { x: maxSigma, y: c + maxSigma * tan_phi }
+            ];
+        }
+
+        chartInstance.update();
+
+        // Show validation panel
+        document.getElementById('validationPanel').classList.remove('hidden');
+
+        // Auto-validate if suelo selected
+        if (document.getElementById('sucs-select').value) {
+            validateAgainstSUCS();
+        }
+    }
+
+    // Init
+    initChart();
+</script>
+{% endblock %}

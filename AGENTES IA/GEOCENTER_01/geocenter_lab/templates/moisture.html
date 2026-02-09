@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block header %}Contenido de Humedad (ASTM D2216){% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- INPUT TABLE -->
+        <div class="md:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-gray-700">📋 Datos de Muestras</h3>
+                <div class="space-x-2">
+                    <button onclick="addRow()"
+                        class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded text-gray-600 font-semibold transition-colors">+
+                        Fila</button>
+                    <button onclick="calculate()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow font-bold transition-all">Calcular</button>
+                </div>
+            </div>
+
+            <table class="w-full text-sm text-center">
+                <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+                    <tr>
+                        <th class="p-3 rounded-l-lg">ID</th>
+                        <th class="p-3">Peso Húmedo + T (gr)</th>
+                        <th class="p-3">Peso Seco + T (gr)</th>
+                        <th class="p-3 rounded-r-lg">Peso Tara (gr)</th>
+                    </tr>
+                </thead>
+                <tbody id="moisture-body">
+                    <!-- Default 3 rows -->
+                    {% for i in range(1, 4) %}
+                    <tr class="sample-row border-b border-gray-50 last:border-0 hover:bg-blue-50 transition-colors">
+                        <td class="p-2 font-bold text-gray-400">{{ i }}</td>
+                        <td class="p-2"><input type="number" step="0.01"
+                                class="wt w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center"
+                                placeholder="0.00"></td>
+                        <td class="p-2"><input type="number" step="0.01"
+                                class="dt w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center"
+                                placeholder="0.00"></td>
+                        <td class="p-2"><input type="number" step="0.01"
+                                class="t w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center"
+                                placeholder="0.00"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- RESULTS CARD -->
+        <div
+            class="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg text-white p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+
+            <h4 class="text-sm uppercase tracking-widest opacity-80 mb-4">Humedad Promedio</h4>
+
+            <div class="flex items-baseline gap-1">
+                <span id="result-avg" class="text-7xl font-black tracking-tighter">--</span>
+                <span class="text-2xl font-light opacity-80">%</span>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-white/20 w-full text-sm opacity-70">
+                <p>NTP 339.127 / ASTM D2216</p>
+                <p class="mt-1">Método de secado al horno</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function addRow() {
+        const tbody = document.getElementById('moisture-body');
+        const count = tbody.children.length + 1;
+        const row = document.createElement('tr');
+        row.className = 'sample-row border-b border-gray-50 last:border-0 hover:bg-blue-50 transition-colors';
+        row.innerHTML = `
+            <td class="p-2 font-bold text-gray-400">${count}</td>
+            <td class="p-2"><input type="number" step="0.01" class="wt w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center" placeholder="0.00"></td>
+            <td class="p-2"><input type="number" step="0.01" class="dt w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center" placeholder="0.00"></td>
+            <td class="p-2"><input type="number" step="0.01" class="t w-full bg-gray-50 border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-blue-500 text-center" placeholder="0.00"></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    async function calculate() {
+        const rows = document.querySelectorAll('.sample-row');
+        const samples = Array.from(rows).map(row => ({
+            wet_tare: parseFloat(row.querySelector('.wt').value) || 0,
+            dry_tare: parseFloat(row.querySelector('.dt').value) || 0,
+            tare: parseFloat(row.querySelector('.t').value) || 0
+        }));
+
+        const response = await fetch('/humedad', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ samples: samples })
+        });
+
+        const res = await response.json();
+
+        if (res.success) {
+            document.getElementById('result-avg').innerText = res.results.average.toFixed(2);
+        } else {
+            alert(res.error);
+        }
+    }
+</script>
+{% endblock %}
