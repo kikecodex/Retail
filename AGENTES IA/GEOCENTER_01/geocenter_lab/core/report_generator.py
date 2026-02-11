@@ -6,6 +6,10 @@ con tablas ASTM y gráficos Chart.js.
 import json
 import math
 import os
+try:
+    from soil_validation import SOIL_PARAMETERS
+except ImportError:
+    from core.soil_validation import SOIL_PARAMETERS
 
 
 def generate_report(project, results, output_path=None):
@@ -17,6 +21,7 @@ def generate_report(project, results, output_path=None):
         results: dict con resultados procesados de cada ensayo
         output_path: ruta donde guardar el HTML (opcional, si None retorna string)
     """
+    sucs = project.get('sucs', project.get('material', 'SM'))
     p = {
         'nombre': project.get('nombre', 'PROYECTO DE INGENIERIA'),
         'ubicacion': project.get('ubicacion', ''),
@@ -30,6 +35,7 @@ def generate_report(project, results, output_path=None):
         'material': project.get('material', ''),
         'solicitud_nro': project.get('solicitud_nro', 'J-001-2025'),
         'descripcion': project.get('descripcion', 'Capacidad Portante'),
+        'sucs': sucs,
     }
     
     pages = []
@@ -76,6 +82,11 @@ def generate_report(project, results, output_path=None):
         pages.append(_page_meyerhof(p, results['meyerhof'], results.get('bearing_capacity', {}), page_num, total_pages))
         page_num += 1
     
+    # Page: CBR
+    if 'cbr' in results:
+        pages.append(_page_cbr(p, results['cbr'], page_num, total_pages))
+        page_num += 1
+    
     html = _wrap_html(pages, results)
     
     if output_path:
@@ -89,7 +100,7 @@ def generate_report(project, results, output_path=None):
 
 def _count_pages(results):
     count = 0
-    for key in ['granulometry', 'moisture', 'limits', 'specific_gravity', 'shear', 'proctor', 'bearing_capacity', 'meyerhof']:
+    for key in ['granulometry', 'moisture', 'limits', 'specific_gravity', 'shear', 'proctor', 'bearing_capacity', 'meyerhof', 'cbr']:
         if key in results:
             count += 2 if key == 'shear' else 1  # shear generates 2 pages
     return count
@@ -141,6 +152,63 @@ def _footer():
         <div class="w-40 border-t border-black pt-2"><strong>Realizado por:</strong><br>Tec. de Laboratorio</div>
         <div class="w-40 border-t border-black pt-2"><strong>Revisado por:</strong><br>Jefe de Laboratorio</div>
         <div class="w-40 border-t border-black pt-2"><strong>Aprobado por:</strong><br>Ing. Civil</div>
+    </div>'''
+
+
+def _methodology_box(norma, nivel, origen, procedimiento, formula, resultado, sucs, param_checks):
+    """
+    Genera bloque HTML de fundamentación técnica con trazabilidad.
+    
+    Args:
+        norma: str - "ASTM D3080 / NTP 339.171"
+        nivel: str - "Primario", "Derivado", "Calculado"
+        origen: str - de dónde provienen los datos
+        procedimiento: str - descripción breve del método
+        formula: str - ecuación principal (puede incluir HTML)
+        resultado: str - "φ = 31.0°, c = 0.30 kg/cm²"
+        sucs: str - tipo SUCS ("SM")
+        param_checks: list of (label, value, soil_key, unit) tuples
+    """
+    nivel_icons = {'Primario': '🟢', 'Derivado': '🟡', 'Calculado': '🔴'}
+    nivel_icon = nivel_icons.get(nivel, '⚪')
+    
+    soil = SOIL_PARAMETERS.get(sucs, {})
+    soil_name = soil.get('name', sucs)
+    
+    # Build validation rows
+    validation_rows = ''
+    all_in_range = True
+    for label, value, soil_key, unit in param_checks:
+        rng = soil.get(soil_key)
+        if rng and value is not None:
+            try:
+                val = float(value)
+                in_range = rng[0] <= val <= rng[1]
+                icon = '✅' if in_range else '⚠️'
+                if not in_range:
+                    all_in_range = False
+                validation_rows += f'<div style="margin-left:12px;">{icon} {label} = {val}{unit} — rango esperado: ({rng[0]} – {rng[1]}{unit})</div>'
+            except (ValueError, TypeError):
+                pass
+    
+    status_icon = '✅' if all_in_range else '⚠️'
+    status_text = 'Valores dentro del rango esperado' if all_in_range else 'Algunos valores fuera del rango esperado'
+    status_color = '#065f46' if all_in_range else '#92400e'
+    status_bg = '#d1fae5' if all_in_range else '#fef3c7'
+    
+    return f'''
+    <div style="border: 1.5px solid #374151; border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 8px; line-height: 1.4; background: #f9fafb;">
+        <div style="font-weight:bold; font-size:9px; margin-bottom:4px; color:#1f2937;">📋 FUNDAMENTACIÓN TÉCNICA</div>
+        <div><strong>Norma:</strong> {norma}</div>
+        <div><strong>Nivel:</strong> {nivel_icon} {nivel}</div>
+        <div style="margin-top:3px;"><strong>🔗 Origen de datos:</strong> {origen}</div>
+        <div style="margin-top:3px;"><strong>Procedimiento:</strong> {procedimiento}</div>
+        <div style="margin-top:3px;"><strong>Fórmula:</strong> {formula}</div>
+        <div style="margin-top:3px;"><strong>Resultado:</strong> {resultado}</div>
+        <div style="margin-top:6px; padding:4px 8px; border-radius:4px; background:{status_bg}; color:{status_color}; font-weight:bold;">
+            {status_icon} {status_text} para {sucs} ({soil_name})
+        </div>
+        {validation_rows}
     </div>'''
 
 # ===================== AASHTO CLASSIFICATION =====================
@@ -455,6 +523,16 @@ def _page_granulometry(p, results, pn, tp):
                 <td colspan="4"></td>
             </tr>
         </table>
+        {_methodology_box(
+            norma='NTP 339.128-1999',
+            nivel='Primario',
+            origen='Ensayo directo de laboratorio — tamizado mecánico por mallas ASTM',
+            procedimiento='Se tamió la muestra por mallas estándar y se determinó el porcentaje pasante acumulado para clasificación SUCS',
+            formula='% Pasante = (Peso pasante acumulado / Peso total) × 100',
+            resultado=f'% Finos = {fines_pct:.1f}%, Gravas = {gravel_pct:.1f}%, Arena = {sand_pct:.1f}%',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('% Finos', fines_pct, 'finos_percent', '%')]
+        )}
     </div>'''
 
 
@@ -503,6 +581,16 @@ def _page_moisture(p, moisture, pn, tp):
                 <tr><td class="bg-gray-100 p-3 border-r border-black w-2/3 uppercase">Humedad Promedio (%)</td><td class="p-3 text-lg">{avg}</td></tr>
             </table>
         </div>
+        {_methodology_box(
+            norma='NTP 339.127-1998',
+            nivel='Primario',
+            origen='Ensayo directo de laboratorio — secado en horno a 110±5°C por 24 horas',
+            procedimiento='Se pesaron 3 muestras húmedas, se secaron en horno y se repesaron para determinar el agua evaporada',
+            formula='w (%) = (Mw / Ms) × 100, donde Mw = peso del agua, Ms = peso del suelo seco',
+            resultado=f'Humedad promedio = {avg}%',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('Humedad', avg, 'humedad', '%')]
+        )}
         {_footer()}
     </div>'''
 
@@ -577,6 +665,16 @@ def _page_limits(p, limits, pn, tp):
             <div class="flex-1 p-2 border-r border-black text-center">Límite Plástico (L.P.) = {pl}</div>
             <div class="flex-1 p-2 text-center">Indice Plasticidad (I.P.) = {pi}</div>
         </div>
+        {_methodology_box(
+            norma='NTP 339.129-1999 / NTP 339.130-1999',
+            nivel='Derivado',
+            origen=f'Cartilla GEOCENTER v2 para {p.get("sucs", "SM")} — valores objetivo de LL y LP generados por ingeniería inversa',
+            procedimiento='LL: Copa de Casagrande con 4 puntos a diferentes humedades. LP: Rollitos de 3mm hasta agrietamiento',
+            formula='IP = LL - LP (ASTM D4318)',
+            resultado=f'LL = {ll}, LP = {pl}, IP = {pi}',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('LL', ll, 'll', ''), ('LP', pl, 'lp', ''), ('IP', pi, 'ip', '')]
+        )}
     </div>'''
 
 
@@ -621,6 +719,16 @@ def _page_sg(p, sg, pn, tp):
                 <tr><td class="bg-gray-100 p-3 border-r border-black w-2/3 uppercase">Peso Especifico Relativo de Solidos (Gs)</td><td class="p-3 text-lg">{avg_gs}</td></tr>
             </table>
         </div>
+        {_methodology_box(
+            norma='NTP 339.131-1998',
+            nivel='Derivado',
+            origen=f'Cartilla GEOCENTER v2 para {p.get("sucs", "SM")} — valor objetivo generado por ingeniería inversa',
+            procedimiento='Se determinó el peso específico con picnómetro de 500 ml, comparando masa de suelo seco con volumen desplazado de agua',
+            formula='Gs = Mo / (Mo + Ma - Mb), donde Mo = masa suelo seco, Ma = masa picnómetro+agua, Mb = masa picnómetro+agua+suelo',
+            resultado=f'Gs promedio = {avg_gs}',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('Gs', avg_gs, 'peso_especifico', '')]
+        )}
         {_footer()}
     </div>'''
 
@@ -742,6 +850,16 @@ def _page_shear(p, shear, pn, tp):
             <div class="text-xs text-center font-bold bg-gray-200 py-1 border-b border-black">DIAGRAMA ESF. CORTANTE - ESF. NORMAL</div>
             <canvas id="shearMohrChart"></canvas>
         </div>
+        {_methodology_box(
+            norma='ASTM D3080 / NTP 339.171',
+            nivel='Derivado',
+            origen=f'Cartilla GEOCENTER v2 para {p.get("sucs", "SM")} — parámetros objetivo (φ, c) generados por ingeniería inversa a partir de la clasificación SUCS',
+            procedimiento=f'Se ensayaron {n_spec} especímenes bajo esfuerzos normales crecientes. Envolvente de falla por regresión lineal de pares (σ, τ)',
+            formula='τ = c + σ·tan(φ), donde τ = esfuerzo cortante, σ = esfuerzo normal, c = cohesión, φ = ángulo de fricción',
+            resultado=f'φ = {phi}°, c = {c} kg/cm²',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('φ', phi, 'phi', '°'), ('c', c, 'cohesion', ' kg/cm²')]
+        )}
         {_footer()}
     </div>'''
 
@@ -866,6 +984,142 @@ def _page_proctor(p, proctor, pn, tp):
                 <canvas id="proctorChart"></canvas>
             </div>
         </div>
+        {_methodology_box(
+            norma='ASTM D1557 / MTC E-115',
+            nivel='Derivado',
+            origen=f'Cartilla GEOCENTER v2 para {p.get("sucs", "SM")} — MDD y OMC objetivo generados por ingeniería inversa',
+            procedimiento=f'Compactación en {layers} capas con {blows} golpes por capa. Se determinaron {len(points)} puntos de la curva de compactación',
+            formula='γd = γw / (1 + w/100), donde γd = densidad seca, γw = densidad húmeda, w = contenido de humedad',
+            resultado=f'MDD = {mdd} g/cm³, OMC = {omc}%',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('MDD', mdd, 'mdd', ' g/cm³'), ('OMC', omc, 'omc', '%')]
+        )}
+        {_footer()}
+    </div>'''
+
+
+def _page_cbr(p, cbr, pn, tp):
+    """Generate CBR report page with table and chart."""
+    r = cbr if isinstance(cbr, dict) else {}
+    specimens = r.get('specimens', [])
+    cbr_95 = r.get('cbr_95_mdd', '--')
+    cbr_100 = r.get('cbr_100_mdd', '--')
+    design_cbr = r.get('design_cbr', '--')
+    mdd = r.get('proctor_mdd', '--')
+    omc = r.get('proctor_omc', '--')
+    
+    # Build specimen summary rows
+    spec_rows = ''
+    for i, sp in enumerate(specimens):
+        spec_rows += f'''<tr class="border-b border-gray-300">
+            <td class="p-1 border-r border-black text-center font-bold">{sp.get('blows', 0)}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('dry_density', 0):.3f}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('moisture_pct', 0):.1f}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('compaction_pct', 0):.1f}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('swell_pct', 0):.2f}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('cbr_01', 0):.1f}</td>
+            <td class="p-1 border-r border-black text-center">{sp.get('cbr_02', 0):.1f}</td>
+            <td class="p-1 text-center font-bold bg-yellow-50">{sp.get('cbr_selected', 0):.1f}</td>
+        </tr>'''
+    
+    # Build penetration-load rows for each specimen
+    pen_header = ''.join(f'<td class="p-1 border-r border-black font-bold text-center">{sp.get("blows",0)} golpes</td>' for sp in specimens)
+    pen_rows = ''
+    penetrations = [0.64, 1.27, 1.91, 2.54, 3.81, 5.08, 7.62, 10.16, 12.70]
+    pen_inches = [0.025, 0.050, 0.075, 0.100, 0.150, 0.200, 0.300, 0.400, 0.500]
+    
+    for j, (pen_mm, pen_in) in enumerate(zip(penetrations, pen_inches)):
+        cells = ''
+        for sp in specimens:
+            loads = sp.get('corrected_loads', sp.get('loads_lbf', []))
+            load = loads[j] if j < len(loads) else 0
+            bg = ' bg-yellow-50 font-bold' if pen_mm in [2.54, 5.08] else ''
+            cells += f'<td class="p-1 border-r border-black text-center{bg}">{load:.1f}</td>'
+        bg_row = ' bg-yellow-50' if pen_mm in [2.54, 5.08] else ''
+        pen_rows += f'''<tr class="border-b border-gray-200{bg_row}">
+            <td class="p-1 border-r border-black text-center">{pen_mm:.2f}</td>
+            <td class="p-1 border-r border-black text-center">{pen_in:.3f}</td>
+            {cells}
+        </tr>'''
+    
+    return f'''
+    <div class="a4-page" style="page-break-before: always;">
+        {_project_header(p, 'Ensayo CBR (California Bearing Ratio)', '(NTP 339.145 / ASTM D1883)', pn, tp)}
+        
+        <!-- SPECIMEN SUMMARY TABLE -->
+        <div class="text-[9px] font-bold text-center bg-gray-200 border border-black p-1 mb-1">RESUMEN DE ESPECÍMENES</div>
+        <table class="text-[9px] border-collapse border-2 border-black w-full text-center mb-3">
+            <thead class="bg-gray-100 font-bold">
+                <tr class="border-b-2 border-black">
+                    <td class="p-1 border-r border-black">Golpes/capa</td>
+                    <td class="p-1 border-r border-black">γd (g/cm³)</td>
+                    <td class="p-1 border-r border-black">w (%)</td>
+                    <td class="p-1 border-r border-black">Compactación (%)</td>
+                    <td class="p-1 border-r border-black">Expansión (%)</td>
+                    <td class="p-1 border-r border-black">CBR@0.1"</td>
+                    <td class="p-1 border-r border-black">CBR@0.2"</td>
+                    <td class="p-1 bg-yellow-100">CBR (%)</td>
+                </tr>
+            </thead>
+            <tbody>{spec_rows}</tbody>
+        </table>
+        
+        <!-- PENETRATION-LOAD TABLE -->
+        <div class="text-[9px] font-bold text-center bg-gray-200 border border-black p-1 mb-1">DATOS DE PENETRACIÓN</div>
+        <table class="text-[9px] border-collapse border-2 border-black w-full text-center mb-3">
+            <thead class="bg-gray-100 font-bold">
+                <tr class="border-b-2 border-black">
+                    <td class="p-1 border-r border-black">Penetración (mm)</td>
+                    <td class="p-1 border-r border-black">Penetración (pulg)</td>
+                    {pen_header}
+                </tr>
+            </thead>
+            <tbody>{pen_rows}</tbody>
+            <tfoot>
+                <tr class="border-t-2 border-black bg-blue-50 font-bold">
+                    <td colspan="2" class="p-1 border-r border-black text-right">Carga Patrón @ 0.1" (lbf):</td>
+                    <td colspan="{len(specimens)}" class="p-1 text-center">3000</td>
+                </tr>
+                <tr class="bg-blue-50 font-bold border-b-2 border-black">
+                    <td colspan="2" class="p-1 border-r border-black text-right">Carga Patrón @ 0.2" (lbf):</td>
+                    <td colspan="{len(specimens)}" class="p-1 text-center">4500</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <!-- CHART -->
+        <div class="flex gap-2 mb-2">
+            <div class="w-7/12 border-2 border-black relative bg-white" style="height:200px;">
+                <div class="text-[9px] font-bold text-center bg-gray-200 border-b border-black p-0.5">Curva Carga vs Penetración</div>
+                <canvas id="printCBRChart"></canvas>
+            </div>
+            <div class="w-5/12">
+                <div class="border-2 border-black mb-2">
+                    <div class="text-[9px] font-bold text-center bg-gray-200 border-b border-black p-1">RESULTADOS CBR</div>
+                    <table class="w-full text-xs">
+                        <tr class="border-b border-gray-300"><td class="p-2 font-bold">MDD (Proctor):</td><td class="p-2 text-center">{mdd} g/cm³</td></tr>
+                        <tr class="border-b border-gray-300"><td class="p-2 font-bold">OMC (Proctor):</td><td class="p-2 text-center">{omc} %</td></tr>
+                        <tr class="border-b border-gray-300 bg-yellow-50"><td class="p-2 font-bold">CBR al 95% MDD:</td><td class="p-2 text-center font-bold text-lg">{cbr_95}%</td></tr>
+                        <tr class="bg-yellow-50"><td class="p-2 font-bold">CBR al 100% MDD:</td><td class="p-2 text-center font-bold text-lg">{cbr_100}%</td></tr>
+                    </table>
+                </div>
+                <div class="border-2 border-black bg-green-50">
+                    <table class="w-full text-sm font-bold text-center">
+                        <tr><td class="p-3">CBR de Diseño = {design_cbr}%</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {_methodology_box(
+            norma='NTP 339.145 / ASTM D1883',
+            nivel='Derivado',
+            origen=f'Correlación SUCS ({p.get("sucs", "SM")}) + Proctor Modificado (MDD={mdd}, OMC={omc}%)',
+            procedimiento='3 especímenes compactados a 56, 25 y 10 golpes/capa. Saturación 96h. Penetración a 1.27 mm/min con pistón de 1.954"',
+            formula='CBR (%) = (Carga ensayo / Carga patrón) × 100. Patrón: 3000 lbf @0.1", 4500 lbf @0.2"',
+            resultado=f'CBR@95%MDD = {cbr_95}%, CBR@100%MDD = {cbr_100}%',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[]
+        )}
         {_footer()}
     </div>'''
 
@@ -1041,6 +1295,16 @@ def _page_bearing(p, bc, pn, tp):
             </thead>
             <tbody>{settle_rows}</tbody>
         </table>
+        {_methodology_box(
+            norma='Terzaghi (1943) / NTP CE.050',
+            nivel='Calculado',
+            origen=f'Calculado a partir de phi={phi} y c={c} kg/cm2 (Corte Directo) + gamma={gamma} g/cm3 (Proctor)',
+            procedimiento=f'Aplicacion de teoria de Terzaghi para cimentacion {shape} (B={B}m, Df={Df}m, FS={FS})',
+            formula=f'qu = c*Nc + q*Nq + 0.5*gamma*B*Ng, donde Nc={Nc:.1f}, Nq={Nq:.1f}, Ng={Ng:.1f}',
+            resultado=f'qu = {qu} kg/cm2, qa = {qa} kg/cm2 (FS={FS})',
+            sucs=p.get('sucs', 'SM'),
+            param_checks=[('qa', qa, 'qa_range', ' kg/cm2')]
+        )}
         {_footer()}
     </div>'''
 
@@ -1246,6 +1510,29 @@ def _chart_scripts(results):
             }}
         }}); }}''')
     
+
+    # CBR chart
+    cbr = results.get('cbr', {})
+    cbr_specs = cbr.get('specimens', [])
+    if cbr_specs:
+        cbr_datasets = []
+        cbr_colors = ['#e74c3c', '#3498db', '#2ecc71']
+        penetrations_cbr = [0.64, 1.27, 1.91, 2.54, 3.81, 5.08, 7.62, 10.16, 12.70]
+        for i, sp in enumerate(cbr_specs):
+            loads = sp.get('corrected_loads', sp.get('loads_lbf', []))
+            pts_cbr = [{'x': pen, 'y': ld} for pen, ld in zip(penetrations_cbr, loads)]
+            cbr_datasets.append({'data': pts_cbr, 'label': str(sp.get('blows', 0)) + ' golpes', 'color': cbr_colors[i % 3]})
+        ds_cbr_json = ','.join(f'{{data:{json.dumps(d["data"])},showLine:true,borderColor:"{d["color"]}",borderWidth:2,pointRadius:3,label:"{d["label"]}",tension:0.3}}' for d in cbr_datasets)
+        scripts.append(f''''
+        const ctxCBR = document.getElementById('printCBRChart');
+        if(ctxCBR) {{{{ new Chart(ctxCBR, {{{{
+            type:'scatter', data:{{{{datasets:[{ds_cbr_json}]}}}},
+            options:{{{{animation:false,responsive:true,maintainAspectRatio:false,
+                scales:{{{{x:{{{{min:0,max:14,title:{{{{display:true,text:'Penetracion (mm)'}}}}}}}}}},y:{{{{min:0,title:{{{{display:true,text:'Carga (lbf)'}}}}}}}}}}}}}},
+                plugins:{{{{legend:{{{{position:'bottom',labels:{{{{font:{{{{size:8}}}}}}}}}}}}}}}}}}
+            }}}}
+        }}}}); }}}}''')
+
     return '\n'.join(scripts)
 
 

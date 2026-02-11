@@ -10,7 +10,7 @@
         <div class="flex justify-between items-center flex-wrap gap-3">
             <div>
                 <h2 class="text-2xl font-bold">📋 Ingreso de Datos de Laboratorio</h2>
-                <p class="text-blue-100 mt-1" id="wizard-subtitle">Paso 1 de 8 — Completa los datos del proyecto</p>
+                <p class="text-blue-100 mt-1" id="wizard-subtitle">Paso 1 de 9 — Completa los datos del proyecto</p>
             </div>
         </div>
     </div>
@@ -56,6 +56,11 @@
         <div class="text-gray-300">→</div>
         <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(7)">
             <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">8</span>
+            <span class="hidden sm:inline">CBR</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(8)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">9</span>
             <span class="hidden sm:inline">Ciment.</span>
         </div>
     </div>
@@ -71,6 +76,31 @@
                     <h3 class="font-bold text-gray-700">📁 1. Datos del Proyecto</h3>
                     <p class="text-xs text-gray-500 mt-1">👉 Completa el nombre del proyecto, ubicación, calicata y
                         demás datos generales del estudio.</p>
+                </div>
+                <div id="auto-prefill-panel" class="mx-4 mt-3 mb-1 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <h4 class="font-bold text-emerald-800">&#129302; Pre-llenado Inteligente</h4>
+                    </div>
+                    <p class="text-xs text-emerald-700 mb-3">Selecciona tipo de suelo SUCS para pre-llenar todos los ensayos con datos realistas.</p>
+                    <div class="grid grid-cols-3 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-600 mb-1">SUCS</label>
+                            <select id="prefill-sucs" class="w-full border-2 border-emerald-300 rounded-lg p-2 text-sm">
+                                <option value="">Seleccionar...</option>
+                                <option value="GW">GW</option><option value="GP">GP</option>
+                                <option value="GM">GM</option><option value="GC">GC</option>
+                                <option value="SW">SW</option><option value="SP">SP</option>
+                                <option value="SM">SM</option><option value="SC">SC</option>
+                                <option value="ML">ML</option><option value="CL">CL</option>
+                                <option value="MH">MH</option><option value="CH">CH</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 flex items-end gap-2">
+                            <button onclick="prefillFromAuto()" id="btn-prefill" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg font-bold transition-all">&#129302; Generar datos</button>
+                            <button onclick="clearPrefill()" class="bg-red-100 hover:bg-red-200 text-red-600 p-2.5 rounded-lg transition-all">&#128465;</button>
+                        </div>
+                    </div>
+                    <div id="prefill-status" class="hidden mt-2 text-xs text-emerald-700 font-semibold"></div>
                 </div>
                 <div id="section-project" class="p-4 grid grid-cols-2 gap-3 text-sm">
                     <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proyecto
@@ -433,11 +463,37 @@
                 </div>
             </div>
 
-            <!-- 8. Foundation -->
+
+            <!-- 8. CBR -->
             <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
                 data-step="7">
+                <div class="bg-orange-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-orange-700">📊 8. Ensayo CBR (NTP 339.145 / ASTM D1883)</h3>
+                    <p class="text-xs text-orange-600 mt-1">👉 Ingresa las lecturas de penetración-carga para 3 especímenes (56, 25, 10 golpes).
+                        Datos de hinchamiento y humedad después de saturación (96h).</p>
+                </div>
+                <div id="section-cbr" class="p-4 space-y-3">
+                    <div class="grid grid-cols-3 gap-3 text-sm mb-2">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Vol. Molde CBR (cm³)</label>
+                            <input type="number" id="cbr-mold-vol" class="w-full border rounded p-1" placeholder="2124">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Peso Molde (gr)</label>
+                            <input type="number" id="cbr-mold-weight" class="w-full border rounded p-1" placeholder="6200">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Altura Espécimen (mm)</label>
+                            <input type="number" id="cbr-height" class="w-full border rounded p-1" value="116.43" step="0.01">
+                        </div>
+                    </div>
+                    <!-- 3 specimens -->
+                    <div id="cbr-specimens"></div>
+                </div>
+            </div>
+
+            <!-- 9. Foundation -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="8">
                 <div class="bg-indigo-50 px-4 py-3 border-b">
-                    <h3 class="font-bold text-indigo-700">🏗️ 8. Parámetros de Cimentación</h3>
+                    <h3 class="font-bold text-indigo-700">🏗️ 9. Parámetros de Cimentación</h3>
                     <p class="text-xs text-indigo-600 mt-1">👉 Último paso. Define ancho (B), largo (L), profundidad
                         (Df), factor de seguridad (FS) y el tipo de cimentación y falla.</p>
                 </div>
@@ -496,7 +552,7 @@
         <div class="space-y-4">
             <div id="status-panel" class="bg-gray-100 rounded-xl p-4 text-center">
                 <div class="text-gray-400 text-4xl mb-2">📊</div>
-                <p class="text-gray-500">Completa los 8 pasos y presiona<br><strong>"CALCULAR Y GENERAR
+                <p class="text-gray-500">Completa los 9 pasos y presiona<br><strong>"CALCULAR Y GENERAR
                         REPORTE"</strong></p>
                 <div class="mt-3 text-left text-xs space-y-1" id="step-checklist">
                     <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 1. Proyecto</div>
@@ -506,7 +562,8 @@
                     <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 5. Peso Específico</div>
                     <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 6. Corte Directo</div>
                     <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 7. Proctor</div>
-                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 8. Cimentación</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 8. CBR</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 9. Cimentación</div>
                 </div>
             </div>
 
@@ -614,10 +671,59 @@
         document.getElementById('proctor-points').innerHTML = html;
     }
 
+
+    const CBR_PENETRATIONS = [
+        { mm: 0.64, inch: '0.025' }, { mm: 1.27, inch: '0.050' }, { mm: 1.91, inch: '0.075' },
+        { mm: 2.54, inch: '0.100' }, { mm: 3.81, inch: '0.150' }, { mm: 5.08, inch: '0.200' },
+        { mm: 7.62, inch: '0.300' }, { mm: 10.16, inch: '0.400' }, { mm: 12.70, inch: '0.500' }
+    ];
+
+    function initCBRSpecimens() {
+        const blowsArr = [56, 25, 10];
+        const colorClasses = ['red', 'blue', 'green'];
+        let html = '';
+        blowsArr.forEach((b, i) => {
+            const cc = colorClasses[i];
+            html += `<div class="border-2 border-${cc}-200 rounded-lg p-3 mb-3">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-sm text-${cc}-700">Esp. ${i + 1} - ${b} golpes/capa</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2 text-xs mb-2">
+                    <div><label class="block font-bold text-gray-500 mb-1">Peso M+M (gr)</label>
+                        <input type="number" id="cbr-wm-${i+1}" class="w-full border rounded p-1" step="0.1"></div>
+                    <div><label class="block font-bold text-gray-500 mb-1">W inicial (%)</label>
+                        <input type="number" id="cbr-wi-${i+1}" class="w-full border rounded p-1" step="0.01"></div>
+                    <div><label class="block font-bold text-gray-500 mb-1">W final (%)</label>
+                        <input type="number" id="cbr-wf-${i+1}" class="w-full border rounded p-1" step="0.01"></div>
+                    <div><label class="block font-bold text-gray-500 mb-1">Hinch. ini (mm)</label>
+                        <input type="number" id="cbr-hi-${i+1}" class="w-full border rounded p-1" step="0.001" value="0"></div>
+                    <div><label class="block font-bold text-gray-500 mb-1">Hinch. fin (mm)</label>
+                        <input type="number" id="cbr-hf-${i+1}" class="w-full border rounded p-1" step="0.001"></div>
+                </div>
+                <table class="w-full text-xs">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="p-1">Penetr. (mm)</th>
+                        <th class="p-1">Penetr. (pulg)</th>
+                        <th class="p-1">Carga (lbf)</th>
+                    </tr></thead>
+                    <tbody>`;
+            CBR_PENETRATIONS.forEach((p, j) => {
+                const highlight = (p.mm === 2.54 || p.mm === 5.08) ? 'bg-yellow-50 font-bold' : '';
+                html += `<tr class="border-b ${highlight}">
+                    <td class="p-1 text-center">${p.mm}</td>
+                    <td class="p-1 text-center">${p.inch}</td>
+                    <td class="p-1"><input type="number" id="cbr-load-${i+1}-${j+1}" class="w-24 border rounded p-0.5 text-center" step="0.1"></td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+        });
+        document.getElementById('cbr-specimens').innerHTML = html;
+    }
+
     // ===== WIZARD NAVIGATION =====
     let currentStep = 0;
-    const TOTAL_STEPS = 8;
-    const STEP_NAMES = ['Proyecto', 'Granulometría', 'Humedad', 'Límites', 'Peso Específico', 'Corte Directo', 'Proctor', 'Cimentación'];
+    const TOTAL_STEPS = 9;
+    const STEP_NAMES = ['Proyecto', 'Granulometría', 'Humedad', 'Límites', 'Peso Específico', 'Corte Directo', 'Proctor', 'CBR', 'Cimentación'];
     const STEP_INSTRUCTIONS = [
         'Completa los datos del proyecto',
         'Ingresa los pesos retenidos por tamiz',
@@ -626,6 +732,7 @@
         'Ingresa los datos del picnómetro',
         'Ingresa las lecturas de esfuerzo cortante',
         'Ingresa los datos de compactación Proctor',
+        'Ingresa los datos del ensayo CBR (3 especímenes)',
         'Define los parámetros de la cimentación'
     ];
     const visitedSteps = new Set([0]);
@@ -841,6 +948,30 @@
             }).filter(x => x)
         };
 
+        // CBR
+        const cbr_specimens = [1, 2, 3].map(i => {
+            const loads = [];
+            CBR_PENETRATIONS.forEach((p, j) => {
+                loads.push(parseFloat(document.getElementById(`cbr-load-${i}-${j+1}`).value) || 0);
+            });
+            return {
+                blows: [56, 25, 10][i-1],
+                wet_weight_mold: parseFloat(document.getElementById(`cbr-wm-${i}`).value) || 0,
+                moisture_initial: parseFloat(document.getElementById(`cbr-wi-${i}`).value) || 0,
+                moisture_final: parseFloat(document.getElementById(`cbr-wf-${i}`).value) || 0,
+                swell_initial_mm: parseFloat(document.getElementById(`cbr-hi-${i}`).value) || 0,
+                swell_final_mm: parseFloat(document.getElementById(`cbr-hf-${i}`).value) || 0,
+                penetration: CBR_PENETRATIONS.map(p => p.mm),
+                loads_lbf: loads
+            };
+        });
+        const cbr = {
+            mold_volume_cm3: parseFloat(document.getElementById('cbr-mold-vol').value) || 2124,
+            mold_weight_g: parseFloat(document.getElementById('cbr-mold-weight').value) || 6200,
+            specimen_height_mm: parseFloat(document.getElementById('cbr-height').value) || 116.43,
+            specimens: cbr_specimens
+        };
+
         // Foundation
         const foundation = {
             B: parseFloat(document.getElementById('found-b').value) || 1,
@@ -851,7 +982,7 @@
             failure_mode: document.getElementById('found-failure').value,
         };
 
-        return { project, granulometry, moisture, limits, specific_gravity, shear, proctor, foundation };
+        return { project, granulometry, moisture, limits, specific_gravity, shear, proctor, cbr, foundation };
     }
 
     function openReport() {
@@ -866,9 +997,224 @@
 
 
 
+
+
+    // ===== AUTO-PREFILL SYSTEM =====
+    let prefillCache = null;
+
+    function loadPrefillDefaults() {
+        const zone = document.getElementById('prefill-zone').value;
+        const sucs = document.getElementById('prefill-sucs').value;
+        const btn = document.getElementById('btn-prefill');
+        btn.disabled = !sucs;
+
+        if (zone && sucs) {
+            fetch(`/api/zone_defaults?zone=${zone}&sucs=${sucs}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.defaults) {
+                        const d = data.defaults;
+                        document.getElementById('prefill-params').classList.remove('hidden');
+                        document.getElementById('pp-phi').textContent = d.phi || '--';
+                        document.getElementById('pp-c').textContent = d.cohesion || '--';
+                        document.getElementById('pp-ll').textContent = d.ll || '--';
+                        document.getElementById('pp-pl').textContent = d.pl || '--';
+                    }
+                });
+        }
+    }
+
+    async function prefillFromAuto() {
+        const zone = document.getElementById('prefill-zone').value;
+        const sucs = document.getElementById('prefill-sucs').value;
+        if (!sucs) { alert('Selecciona un tipo de suelo SUCS'); return; }
+
+        const btn = document.getElementById('btn-prefill');
+        const statusDiv = document.getElementById('prefill-status');
+        btn.disabled = true;
+        btn.innerHTML = '&#9203; Generando...';
+        statusDiv.classList.remove('hidden');
+        statusDiv.textContent = 'Generando datos sintéticos...';
+
+        try {
+            let params = { sucs };
+            if (zone) {
+                const dRes = await fetch(`/api/zone_defaults?zone=${zone}&sucs=${sucs}`);
+                const dData = await dRes.json();
+                if (dData.defaults) {
+                    const d = dData.defaults;
+                    params = { ...params, humedad: d.moisture, gs: d.gs, ll: d.ll, pl: d.pl, mdd: d.mdd, omc: d.omc, phi: d.phi, cohesion: d.cohesion, fines_pct: d.fines_pct };
+                }
+            }
+
+            const res = await fetch('/api/generar_datos_sinteticos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+            const result = await res.json();
+
+            if (!result.success) throw new Error(result.error);
+
+            prefillCache = result.wizard_data;
+            fillWizardFields(result.wizard_data);
+
+            statusDiv.innerHTML = '&#9989; <strong>Todos los campos pre-llenados.</strong> Edita lo que necesites.';
+            btn.innerHTML = '&#129302; Regenerar datos';
+            btn.disabled = false;
+        } catch (e) {
+            console.error(e);
+            statusDiv.innerHTML = `&#10060; Error: ${e.message}`;
+            btn.innerHTML = '&#129302; Generar datos base';
+            btn.disabled = false;
+        }
+    }
+
+    function fillWizardFields(w) {
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null) {
+                el.value = typeof val === 'number' ? (Number.isInteger(val) ? val : val.toFixed ? parseFloat(val.toFixed(4)) : val) : val;
+                el.classList.add('auto-filled');
+                el.classList.remove('user-edited');
+                el.addEventListener('input', markEdited, { once: true });
+            }
+        }
+
+        // 1. Granulometry
+        if (w.granulometry) {
+            setVal('gran-total', w.granulometry.total_dry_weight);
+            setVal('gran-lavado', w.granulometry.washed_weight);
+            const inputs = document.querySelectorAll('.gran-input');
+            inputs.forEach(inp => {
+                const label = inp.dataset.label;
+                const val = w.granulometry.sieves[label];
+                if (val !== undefined) {
+                    inp.value = val;
+                    inp.classList.add('auto-filled');
+                    inp.classList.remove('user-edited');
+                    inp.addEventListener('input', markEdited, { once: true });
+                }
+            });
+        }
+
+        // 2. Moisture
+        if (w.moisture) {
+            w.moisture.forEach((s, i) => {
+                setVal(`moist-mcws-${i + 1}`, s.Mcws);
+                setVal(`moist-mcs-${i + 1}`, s.Mcs);
+                setVal(`moist-mc-${i + 1}`, s.Mc);
+            });
+        }
+
+        // 3. Limits
+        if (w.limits) {
+            w.limits.ll_data.forEach((d, i) => {
+                setVal(`ll-blows-${i + 1}`, d.blows);
+                setVal(`ll-wet-${i + 1}`, d.wet);
+                setVal(`ll-dry-${i + 1}`, d.dry);
+                setVal(`ll-tare-${i + 1}`, d.tare);
+            });
+            w.limits.pl_data.forEach((d, i) => {
+                setVal(`pl-wet-${i + 1}`, d.wet);
+                setVal(`pl-dry-${i + 1}`, d.dry);
+                setVal(`pl-tare-${i + 1}`, d.tare);
+            });
+        }
+
+        // 4. Specific Gravity
+        if (w.specific_gravity) {
+            w.specific_gravity.forEach((s, i) => {
+                setVal(`gs-ma-${i + 1}`, s.ma);
+                setVal(`gs-mb-${i + 1}`, s.mb);
+                setVal(`gs-a-${i + 1}`, s.a);
+                setVal(`gs-b-${i + 1}`, s.b);
+            });
+        }
+
+        // 5. Shear
+        if (w.shear) {
+            setVal('shear-side', w.shear.side);
+            setVal('shear-height', w.shear.height);
+            setVal('shear-density', w.shear.density);
+            setVal('shear-moisture', w.shear.moisture);
+            w.shear.specimens.forEach((spec, i) => {
+                setVal(`shear-sigma-${i + 1}`, spec.sigma);
+                spec.tau.forEach((t, j) => {
+                    setVal(`shear-tau-${i + 1}-${j + 1}`, t);
+                });
+            });
+        }
+
+        // 6. Proctor
+        if (w.proctor) {
+            setVal('proctor-vol', w.proctor.vol);
+            setVal('proctor-mold', w.proctor.mold_weight);
+            setVal('proctor-layers', w.proctor.layers);
+            setVal('proctor-blows', w.proctor.blows);
+            w.proctor.points.forEach((pt, i) => {
+                setVal(`proctor-wm-${i + 1}`, pt.wm);
+                setVal(`proctor-wht-${i + 1}`, pt.wht);
+                setVal(`proctor-wst-${i + 1}`, pt.wst);
+                setVal(`proctor-wt-${i + 1}`, pt.wt);
+                const tareEl = document.getElementById(`proctor-tare-id-${i + 1}`);
+                if (tareEl) { tareEl.value = pt.tare_id; tareEl.classList.add('auto-filled'); }
+            });
+        }
+
+        // 7. CBR
+        if (w.cbr) {
+            setVal('cbr-mold-vol', w.cbr.mold_volume);
+            setVal('cbr-mold-weight', w.cbr.mold_weight);
+            setVal('cbr-height', w.cbr.specimen_height);
+            if (w.cbr.specimens) {
+                w.cbr.specimens.forEach((sp, i) => {
+                    setVal(`cbr-wm-${i+1}`, sp.wet_weight_mold);
+                    setVal(`cbr-wi-${i+1}`, sp.moisture_initial);
+                    setVal(`cbr-wf-${i+1}`, sp.moisture_final);
+                    setVal(`cbr-hi-${i+1}`, sp.swell_initial_mm);
+                    setVal(`cbr-hf-${i+1}`, sp.swell_final_mm);
+                    if (sp.loads_lbf) {
+                        sp.loads_lbf.forEach((load, j) => {
+                            setVal(`cbr-load-${i+1}-${j+1}`, load);
+                        });
+                    }
+                });
+            }
+        }
+
+        // 8. Foundation
+        if (w.foundation) {
+            setVal('found-b', w.foundation.B);
+            setVal('found-l', w.foundation.L);
+            setVal('found-df', w.foundation.Df);
+            setVal('found-fs', w.foundation.FS);
+        }
+
+        // Mark all steps as visited
+        for (let i = 0; i < TOTAL_STEPS; i++) visitedSteps.add(i);
+        goToStep(currentStep);
+    }
+
+    function markEdited(e) {
+        e.target.classList.remove('auto-filled');
+        e.target.classList.add('user-edited');
+    }
+
+    function clearPrefill() {
+        if (!confirm('¿Limpiar todos los campos pre-llenados?')) return;
+        document.querySelectorAll('.auto-filled, .user-edited').forEach(el => {
+            el.value = '';
+            el.classList.remove('auto-filled', 'user-edited');
+        });
+        prefillCache = null;
+        document.getElementById('prefill-status').classList.add('hidden');
+    }
+
     // Initialize
     initSieveTable();
     initShearSpecimens();
     initProctorPoints();
+    initCBRSpecimens();
 </script>
 {% endblock %}

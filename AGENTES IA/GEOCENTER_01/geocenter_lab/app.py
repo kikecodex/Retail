@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response
 import random
+import math
 import traceback
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'core'))
@@ -20,6 +21,9 @@ from core.database import save_project, save_calicata, save_test, get_all_projec
 from core.synthetic_lab_data import generate_all_lab_data
 from core.report_generator import generate_report
 from core.zone_profiles import ZONE_PROFILES, get_zone_defaults, get_zone_ranges, PERU_DEPARTMENTS, altitude_adjust, get_department_zone
+from core.cbr import calculate_cbr
+from core.synthetic_cbr_data import generate_cbr_data
+from core.stratigraphic_profile import generate_stratigraphic_profile
 
 
 app = Flask(__name__)
@@ -459,6 +463,233 @@ def zone_defaults():
 def departments():
     """Get list of departments with their default zones"""
     return jsonify(PERU_DEPARTMENTS)
+
+@app.route('/api/generar_datos_sinteticos', methods=['POST'])
+def generar_datos_sinteticos():
+    """Generate synthetic raw lab data formatted for the calicata wizard prefill"""
+    try:
+        data = request.get_json()
+        
+        params = {
+            'moisture_pct': float(data.get('humedad', 10)),
+            'specific_gravity': float(data.get('gs', 2.65)),
+            'liquid_limit': float(data.get('ll', 30)),
+            'plastic_limit': float(data.get('pl', 20)),
+            'sucs': data.get('sucs', 'CL'),
+            'fines_pct': float(data.get('fines_pct', 50)),
+            'mdd': float(data.get('mdd', 1.75)),
+            'omc': float(data.get('omc', 12)),
+            'friction_angle': float(data.get('phi', 25)),
+            'cohesion': float(data.get('cohesion', 0.05)),
+        }
+        
+        seed = data.get('seed', None)
+        if seed:
+            random.seed(int(seed))
+        
+        raw = generate_all_lab_data(params)
+        
+        # ── Transform to wizard format ──
+        wizard = {}
+        
+        # Granulometry: map sieve labels to wizard's SIEVES array
+        WIZARD_SIEVES = ['3"','2"','1 1/2"','1"','3/4"','3/8"','N4','N10','N20','N40','N60','N100','N200']
+        SYNTH_SIEVE_MAP = {
+            '3"': '3"', '2"': '2"', '1½"': '1 1/2"', '1"': '1"',
+            '3/4"': '3/4"', '3/8"': '3/8"', '#4': 'N4', 'N°4': 'N4',
+            '#10': 'N10', 'N°10': 'N10', '#20': 'N20', 'N°20': 'N20',
+            '#40': 'N40', 'N°40': 'N40', '#60': 'N60', 'N°60': 'N60',
+            '#100': 'N100', 'N°100': 'N100', '#200': 'N200', 'N°200': 'N200',
+        }
+        if 'granulometry' in raw:
+            g = raw['granulometry']
+            # Build lookup from synthetic sieve name → retained_g
+            sieve_lookup = {}
+            for s in g.get('sieves', []):
+                label = s.get('sieve', s.get('size_label', ''))
+                mapped = SYNTH_SIEVE_MAP.get(label, label)
+                sieve_lookup[mapped] = round(s.get('retained_g', s.get('weight_retained', 0)), 2)
+            wizard['granulometry'] = {
+                'total_dry_weight': g.get('total_weight', g.get('total_dry_weight', 500)),
+                'washed_weight': round(g.get('total_weight', 500) * (1 - params.get('fines_pct', 50) / 100), 1),
+                'sieves': {label: sieve_lookup.get(label, 0) for label in WIZARD_SIEVES}
+            }
+        
+        # Moisture: 2 samples matching moist-mcws/mcs/mc IDs
+        if 'moisture' in raw:
+            samples = raw['moisture']['samples'][:2]
+            wizard['moisture'] = [
+                {'Mcws': s['wet_tare'], 'Mcs': s['dry_tare'], 'Mc': s['tare']}
+                for s in samples
+            ]
+        
+        # Limits: LL (4 determinations) + PL (3 determinations)
+        if 'limits' in raw:
+            lim = raw['limits']
+            wizard['limits'] = {
+                'll_data': [
+                    {'blows': d['blows'], 'wet': d['wet_tare'], 'dry': d['dry_tare'], 'tare': d['tare']}
+                    for d in lim['ll_data'][:4]
+                ],
+                'pl_data': [
+                    {'wet': d['wet_tare'], 'dry': d['dry_tare'], 'tare': d['tare']}
+                    for d in lim['pl_data'][:3]
+                ]
+            }
+            # Pad PL to 3 if only 2
+            while len(wizard['limits']['pl_data']) < 3:
+                # Duplicate last with slight variation
+                last = wizard['limits']['pl_data'][-1].copy()
+                last['wet'] = round(last['wet'] + random.uniform(-0.1, 0.1), 2)
+                last['dry'] = round(last['dry'] + random.uniform(-0.05, 0.05), 2)
+                wizard['limits']['pl_data'].append(last)
+        
+        # Specific Gravity: wizard has ma, mb, a (sample+container), b (container)
+        if 'specific_gravity' in raw:
+            sg = raw['specific_gravity']['samples'][:2]
+            wizard['specific_gravity'] = []
+            for s in sg:
+                # Synthetic has: mo (dry soil mass), ma (picn+water), mb (picn+water+soil)
+                # Wizard expects: ma (picn+water), mb (picn+water+soil), a (soil+container), b (container)
+                container_wt = round(random.uniform(30, 35), 2)
+                wizard['specific_gravity'].append({
+                    'ma': s['ma'],
+                    'mb': s['mb'],
+                    'a': round(s['mo'] + container_wt, 2),
+                    'b': container_wt,
+                })
+        
+        # Direct Shear: convert dial readings → τ stress values for the wizard
+        if 'shear' in raw:
+            sh = raw['shear']
+            cal_a = sh['ring_calibration']['a']
+            cal_b = sh['ring_calibration']['b']
+            cal_conv = sh['ring_calibration']['conv']
+            area = sh['specimen_side_cm'] ** 2  # cm²
+            
+            wizard['shear'] = {
+                'side': sh['specimen_side_cm'],
+                'height': sh['specimen_height_cm'],
+                'density': sh['specimens'][0].get('density_g_cm3', 1.52),
+                'moisture': sh['specimens'][0].get('moisture_pct', 6.07),
+                'specimens': []
+            }
+            
+            for spec in sh['specimens']:
+                sigma = round((spec['normal_force_kg'] * 10) / area, 2)
+                tau_values = []
+                for pt in spec['curve']:
+                    dial = pt['dial']
+                    # Convert dial → force → stress: F = a*dial + b, τ = F * conv / area
+                    force = cal_a * dial + cal_b
+                    tau = round((force * cal_conv) / area, 4)
+                    tau_values.append(max(0, tau))
+                wizard['shear']['specimens'].append({
+                    'sigma': sigma,
+                    'tau': tau_values
+                })
+        
+        # Proctor: transform to wizard's format (wm, tare_id, wht, wst, wt)
+        if 'proctor' in raw:
+            pr = raw['proctor']
+            mold = pr['mold']
+            wizard['proctor'] = {
+                'vol': round(math.pi * (mold['diameter_cm']/2)**2 * mold['height_cm'], 0),
+                'mold_weight': mold['weight_g'],
+                'layers': 5,
+                'blows': 25,
+                'points': []
+            }
+            for i, pt in enumerate(pr['points']):
+                # First moisture sample of each point
+                s = pt['samples'][0]
+                wizard['proctor']['points'].append({
+                    'wm': pt['mold_wet_g'],
+                    'tare_id': f'T-{i+1}',
+                    'wht': s['wet_tare'],
+                    'wst': s['dry_tare'],
+                    'wt': s['tare'],
+                })
+        
+        # Foundation defaults
+        wizard['foundation'] = {
+            'B': float(data.get('B', 1.0)),
+            'L': float(data.get('L', 1.0)),
+            'Df': float(data.get('Df', 1.5)),
+            'FS': float(data.get('FS', 3)),
+        }
+        
+        # CBR data
+        cbr_raw = generate_cbr_data({
+            'sucs': params.get('sucs', 'CL'),
+            'mdd': params.get('mdd', 1.75),
+            'omc': params.get('omc', 12.0),
+        })
+        wizard['cbr'] = {
+            'specimens': [{
+                'blows': s['blows'],
+                'moisture_pct': s['moisture_pct'],
+                'wet_weight_g': s['wet_weight_g'],
+                'mold_weight_g': s['mold_weight_g'],
+                'initial_height_mm': s['initial_height_mm'],
+                'final_height_mm': s['final_height_mm'],
+                'penetration': s['penetration'],
+                'loads_lbf': s['loads_lbf'],
+            } for s in cbr_raw['specimens']],
+            'mold_volume_cm3': cbr_raw['mold_volume_cm3'],
+        }
+        
+        return jsonify({'success': True, 'wizard_data': wizard, 'params_used': params})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
+@app.route('/api/calcular_cbr', methods=['POST'])
+def calcular_cbr():
+    """Calculate CBR from raw penetration-load data"""
+    try:
+        data = request.get_json()
+        result = calculate_cbr(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/generar_datos_cbr', methods=['POST'])
+def generar_datos_cbr():
+    """Generate synthetic CBR raw data from soil parameters"""
+    try:
+        data = request.get_json()
+        params = {
+            'sucs': data.get('sucs', 'CL'),
+            'mdd': float(data.get('mdd', 1.75)),
+            'omc': float(data.get('omc', 12.0)),
+        }
+        if data.get('target_cbr'):
+            params['target_cbr'] = float(data['target_cbr'])
+        
+        raw = generate_cbr_data(params)
+        result = calculate_cbr(raw)
+        
+        return jsonify({
+            'success': True,
+            'raw_data': raw,
+            'results': result.get('results', {}),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
+@app.route('/api/perfil_estratigrafico', methods=['POST'])
+def perfil_estratigrafico():
+    """Generate stratigraphic profile SVG"""
+    try:
+        data = request.get_json()
+        result = generate_stratigraphic_profile(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/generar_reporte', methods=['POST'])
 def generar_reporte():
