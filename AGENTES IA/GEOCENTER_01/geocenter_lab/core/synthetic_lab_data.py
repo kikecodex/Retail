@@ -349,60 +349,334 @@ def generate_proctor_data(target_mdd, target_omc, n_points=5):
 
 
 # =============================================================================
-# 6. CORTE DIRECTO
+# 6. CORTE DIRECTO — Con datos reales de referencia (Yunguyo 2015)
 # =============================================================================
 
-def generate_shear_data(target_phi, target_c, specimen_side=6, specimen_height=2.544):
+# Datos crudos REALES extraídos de corte_directo.xlsx (Yunguyo)
+# Estos son las lecturas de dial VERIFICADAS que producen:
+#   φ = 26.97° (regresión), C = 0.3349 kg/cm² (regresión)
+#   τ_max = [0.4841, 0.6057, 0.9042] para σn = [0.278, 0.556, 1.111]
+YUNGUYO_REFERENCE = {
+    'project': 'Yunguyo I.E.I. Jirón Zepita (2015)',
+    'phi_regression': 26.97,
+    'c_regression': 0.3349,
+    'calibration': {'a': 0.874778, 'b': 1.57003513, 'conv': 0.4535929094},
+    'specimen_side_cm': 6,
+    'specimen_height_cm': 2,
+    'normal_forces_kg': [1, 2, 4],
+    'mold_weight_g': 157.7,
+    'specimen_weights_g': [281.7, 285.2, 282.9],
+    'moisture_data': [
+        {'container_num': 7, 'container_weight_g': 23.8, 'container_wet_g': 98.7, 'container_dry_g': 91.5},
+        {'container_num': 8, 'container_weight_g': 22.9, 'container_wet_g': 80.6, 'container_dry_g': 74.9},
+        {'container_num': 9, 'container_weight_g': 21.7, 'container_wet_g': 71.4, 'container_dry_g': 66.8},
+    ],
+    # 15 lecturas de dial por espécimen — PICO en deform=1.75
+    'dial_readings': [
+        # Espécimen 1 (1 kg, σn=0.278, τ_max=0.484)
+        [0, 9, 13, 19, 25, 37, 39, 41, 41, 42, 42, 41, 40, 39, 39],
+        # Espécimen 2 (2 kg, σn=0.556, τ_max=0.606)
+        [0, 13, 17, 29, 37, 41, 46, 49, 52, 53, 53, 51, 51, 50, 50],
+        # Espécimen 3 (4 kg, σn=1.111, τ_max=0.904)
+        [0, 23, 34, 48, 57, 67, 74, 76, 78, 79, 80, 79, 77, 76, 75],
+    ],
+    'tau_max': [0.4841, 0.6057, 0.9042],
+}
+
+# Datos crudos REALES extraídos de ENSAYOS.xlsx (Carhuayoc, San Marcos, Huari, Ancash)
+# Proyecto: "MEJORAMIENTO DEL SERVICIO...", Calicata C-04, Prof. 1.50m
+# Suelo GC (Grava arcillosa), Sierra (Ancash)
+# φ = 25.17° (regresión), C = 0.0563 kg/cm² (regresión)
+CARHUAYOC_REFERENCE = {
+    'project': 'Carhuayoc-San Marcos, Ancash (2025)',
+    'sucs': 'GC',
+    'zone': 'SIERRA',
+    'phi_regression': 25.17,
+    'c_regression': 0.0563,
+    'specimen_side_cm': 6,
+    'specimen_height_cm': 2,
+    'normal_loads_kg': [0.5, 1.0, 2.0],  # 3 specimens
+    # 14 strain readings per specimen (deformaciones ×10⁻²)
+    'strain_sequence': [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15],
+    'shear_readings': [
+        # Espécimen 1 (0.5 kg) — τ values (kg/cm²)
+        [0, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.12, 0.13, 0.17, 0.19, 0.21, 0.23, 0.27],
+        # Espécimen 2 (1.0 kg)
+        [0.01, 0.03, 0.06, 0.08, 0.09, 0.10, 0.14, 0.15, 0.25, 0.35, 0.38, 0.45, 0.49, 0.51],
+        # Espécimen 3 (2.0 kg)
+        [0.02, 0.04, 0.08, 0.10, 0.12, 0.15, 0.26, 0.28, 0.38, 0.49, 0.58, 0.62, 0.69, 0.73],
+    ],
+    # Proctor data: 5 compaction points
+    'proctor': {
+        'humidity_pct': [3.095, 5.205, 7.107, 9.176, 11.378],
+        'wet_density': [1.807, 1.860, 1.925, 1.948, 1.959],
+        'dry_density': [1.753, 1.768, 1.797, 1.784, 1.759],
+        'mdd': 1.797,
+        'omc': 7.107,
+        'mold_weight_g': 1960,
+        'mold_volume_cc': 1072.79,
+    },
+    # Moisture content
+    'moisture': {
+        'w_pct': 4.45,
+        'wet_weight_g': [203.6, 195.6],
+        'dry_weight_g': [196.1, 188.2],
+        'container_weight_g': [24.9, 24.5],
+    },
+    # Limits
+    'limits': {
+        'll': 38.14,
+        'lp': 24.89,
+        'ip': 13.25,
+        'll_blows': [11, 17, 27, 37],
+        'll_moisture_pct': [40.99, 38.80, 38.21, 36.88],
+    },
+    # Specific gravity
+    'specific_gravity': {
+        'gs': 2.6244,
+        'gs_values': [2.5794, 2.6694],
+    },
+}
+
+# Diccionario de referencia para selección automática
+REFERENCE_DATASETS = {
+    'SM': YUNGUYO_REFERENCE,    # Arena limosa — Puno (Sierra)
+    'GC': CARHUAYOC_REFERENCE,  # Grava arcillosa — Ancash (Sierra)
+}
+
+# Secuencia estándar de deformaciones (mm × 10⁻²) — ASTM D3080
+STD_DEFORMATIONS = [0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75]
+
+
+# ======================== SUCS similarity for reference selection ========================
+# Groups: G=gravas, S=arenas, M=limos, C=arcillas
+_SUCS_GROUP = {
+    'GW': 'G', 'GP': 'G', 'GM': 'G', 'GC': 'G',
+    'SW': 'S', 'SP': 'S', 'SM': 'S', 'SC': 'S',
+    'ML': 'M', 'MH': 'M', 'CL': 'C', 'CH': 'C',
+}
+
+def _select_reference(sucs):
     """
-    Genera curvas esfuerzo-deformación que producen φ y c objetivo.
-    Usa regresión matemáticamente correcta: τ = c + σ·tan(φ)
+    Selecciona la referencia más cercana al SUCS objetivo.
+    Prioridad: mismo SUCS > mismo grupo > fallback a YUNGUYO.
+    """
+    if not sucs:
+        return YUNGUYO_REFERENCE
+    sucs = sucs.upper()
+    # Exact match
+    if sucs in REFERENCE_DATASETS:
+        return REFERENCE_DATASETS[sucs]
+    # Same group (e.g., SC → GC or SM)
+    target_group = _SUCS_GROUP.get(sucs, '')
+    for ref_sucs, ref_data in REFERENCE_DATASETS.items():
+        if _SUCS_GROUP.get(ref_sucs, '') == target_group:
+            return ref_data
+    # Fallback
+    return YUNGUYO_REFERENCE
+
+
+def _normalize_reference(ref):
+    """
+    Normaliza la referencia a formato uniforme con dial_readings y calibración.
+    - YUNGUYO: ya tiene dial_readings + calibration → pass through
+    - CARHUAYOC: tiene shear_readings (τ directos) → convertir a dial equivalentes
+    """
+    if 'dial_readings' in ref:
+        # Yunguyo format — already has raw dials
+        return {
+            'dial_readings': ref['dial_readings'],
+            'calibration': ref['calibration'],
+            'normal_forces_kg': ref['normal_forces_kg'],
+            'tau_max': ref['tau_max'],
+            'moisture_data': ref['moisture_data'],
+            'mold_weight_g': ref.get('mold_weight_g', 157.7),
+            'specimen_weights_g': ref.get('specimen_weights_g', [281.7, 285.2, 282.9]),
+            'deformations': STD_DEFORMATIONS,
+        }
+    
+    if 'shear_readings' in ref:
+        # Carhuayoc format — has direct τ values per strain point
+        # Use standard calibration and reverse-engineer dial readings
+        #   τ = F / A → F = τ × A → dial = (F/conv - b) / a
+        cal_a = 0.874778
+        cal_b = 1.57003513
+        cal_conv = 0.4535929094
+        side = ref.get('specimen_side_cm', 6)
+        area = side * side
+        
+        dial_readings = []
+        tau_maxes = []
+        for specimen_tau in ref['shear_readings']:
+            dials = []
+            max_tau = 0
+            for tau in specimen_tau:
+                if tau <= 0:
+                    dials.append(0)
+                else:
+                    force = tau * area
+                    dial = (force / cal_conv - cal_b) / cal_a
+                    dials.append(max(0, round(dial)))
+                max_tau = max(max_tau, tau)
+            dial_readings.append(dials)
+            tau_maxes.append(round(max_tau, 4))
+        
+        # Build moisture_data from ref if available
+        moisture_data = []
+        if 'moisture' in ref:
+            m = ref['moisture']
+            for i in range(min(3, len(m.get('wet_weight_g', [])))):
+                moisture_data.append({
+                    'container_num': 7 + i,
+                    'container_weight_g': m['container_weight_g'][i],
+                    'container_wet_g': m['wet_weight_g'][i],
+                    'container_dry_g': m['dry_weight_g'][i],
+                })
+        if not moisture_data:
+            # Fallback synthetic moisture data
+            moisture_data = YUNGUYO_REFERENCE['moisture_data']
+        
+        return {
+            'dial_readings': dial_readings,
+            'calibration': {'a': cal_a, 'b': cal_b, 'conv': cal_conv},
+            'normal_forces_kg': ref.get('normal_loads_kg', [1, 2, 4]),
+            'tau_max': tau_maxes,
+            'moisture_data': moisture_data,
+            'mold_weight_g': ref.get('moisture', {}).get('container_weight_g', [157.7])[0] if 'moisture' in ref else 157.7,
+            'specimen_weights_g': [280, 283, 281],  # synthetic
+            'deformations': ref.get('strain_sequence', STD_DEFORMATIONS),
+        }
+    
+    # Unknown format — return Yunguyo as fallback
+    return _normalize_reference(YUNGUYO_REFERENCE)
+
+
+def generate_shear_data(target_phi, target_c, specimen_side=6, specimen_height=2,
+                        moisture_pct=None, sucs=None):
+    """
+    Genera datos crudos de corte directo basados en curvas REALES de referencia,
+    escaladas al φ y c objetivo.
+    
+    Selecciona automáticamente la referencia más cercana al SUCS:
+      - SM → Yunguyo (Puno 2015)
+      - GC → Carhuayoc (Ancash 2025)
+      - Otros → interpolación o fallback
     
     Args:
         target_phi: Ángulo de fricción objetivo (grados)
         target_c: Cohesión objetivo (kg/cm²)
+        specimen_side: Lado del espécimen (cm), default 6
+        specimen_height: Altura del espécimen (cm), default 2
+        moisture_pct: Humedad W(%), opcional
+        sucs: Código SUCS (e.g., 'SM', 'GC') para selección de referencia
     
     Returns:
-        Dict compatible con calculate_direct_shear()
+        Dict compatible con calculate_direct_shear() (raw dial mode)
     """
-    normal_stresses = [0.5, 1.0, 1.5]
+    # Auto-select reference based on SUCS type
+    raw_ref = _select_reference(sucs)
+    ref = _normalize_reference(raw_ref)
+    
+    cal_a = ref['calibration']['a']
+    cal_b = ref['calibration']['b']
+    cal_conv = ref['calibration']['conv']
+    
+    normal_forces_kg = ref['normal_forces_kg']
+    area = specimen_side * specimen_side  # 36 cm²
+    
     tan_phi = math.tan(math.radians(target_phi))
     
+    # Generate mold and humidity data
+    mold_weight = round(random.uniform(155, 160), 1)
+    base_moisture = moisture_pct or round(random.uniform(9, 13), 1)
+    
     specimens = []
-    for sigma in normal_stresses:
-        # τ_max objetivo usando la recta de Mohr-Coulomb
-        tau_max = target_c + sigma * tan_phi
+    for i, force_kg in enumerate(normal_forces_kg):
+        # Normal stress = (Force × 10) / Area
+        sigma_n = (force_kg * 10) / area
         
-        # Generar curva esfuerzo-deformación sigmoidal realista
-        # τ(ε) = τ_max * (1 - exp(-k*ε)) donde k controla la velocidad
-        k = random.uniform(0.25, 0.4)  # rapidez de desarrollo del esfuerzo
+        # Target peak shear stress: τ_max = c + σ·tan(φ)
+        tau_target = target_c + sigma_n * tan_phi
         
-        deformations = [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15]
+        # Reference peak shear stress from selected dataset
+        tau_ref = ref['tau_max'][i]
+        
+        # Scale factor: how much to scale the reference dial readings
+        scale = tau_target / tau_ref if tau_ref > 0 else 1.0
+        
+        # Get reference dial readings for this specimen
+        ref_dials = ref['dial_readings'][i]
+        
+        # Scale and add small noise
         curve = []
-        
-        for eps in deformations:
-            # Curva sigmoidal con leve ruido
-            tau = tau_max * (1 - math.exp(-k * eps))
-            # Añadir ruido muy pequeño (±0.005) para realismo
-            tau += random.uniform(-0.005, 0.005)
-            tau = max(0, round(tau, 2))
+        deformations = ref.get('deformations', STD_DEFORMATIONS)
+        for j, eps in enumerate(deformations):
+            if j < len(ref_dials):
+                ref_dial = ref_dials[j]
+            else:
+                ref_dial = ref_dials[-1]  # extend with last value
+            scaled_dial = ref_dial * scale
+            
+            # Add small noise (±1 dial unit) for realism
+            noise = random.uniform(-0.8, 0.8)
+            dial_val = max(0, round(scaled_dial + noise))
             
             curve.append({
-                'strain_pct': eps,
-                'shear_stress': tau
+                'deform': eps,
+                'dial': dial_val
             })
         
-        # Asegurar que el último punto sea cercano al τ_max
-        curve[-1]['shear_stress'] = round(tau_max + random.uniform(-0.01, 0.01), 2)
+        # Ensure dial=0 at deformation=0
+        curve[0]['dial'] = 0
+        
+        # Specimen moisture with small variation
+        spec_moisture = round(base_moisture + random.uniform(-0.5, 0.5), 2)
+        
+        # Specimen weight (realistic range around reference values)
+        specimen_weight = round(mold_weight + random.uniform(120, 130), 1)
+        density = round((specimen_weight - mold_weight) / (area * specimen_height), 4)
         
         specimens.append({
-            'normal_stress': sigma,
-            'curve': curve
+            'normal_force_kg': force_kg,
+            'curve': curve,
+            'mold_weight_g': mold_weight,
+            'mold_sample_weight_g': specimen_weight,
+            'density_g_cm3': density,
+            'moisture_pct': spec_moisture,
+        })
+    
+    # Generate humidity verification data based on reference pattern
+    humidity_data = []
+    n_moisture = len(ref['moisture_data'])
+    for i in range(3):
+        w_actual = base_moisture + random.uniform(-0.4, 0.4)
+        # Use reference container weights as base, with variation (cycle if fewer than 3)
+        ref_hum = ref['moisture_data'][i % n_moisture]
+        tare = round(ref_hum['container_weight_g'] + random.uniform(-1, 1), 1)
+        dry_weight = round(random.uniform(45, 70), 1)
+        dry_tare = round(tare + dry_weight, 1)
+        wet_tare = round(dry_tare + dry_weight * w_actual / 100, 1)
+        humidity_data.append({
+            'container_num': 7 + i,
+            'container_weight_g': tare,
+            'container_wet_g': wet_tare,
+            'container_dry_g': dry_tare,
         })
     
     return {
         'specimen_side_cm': specimen_side,
         'specimen_height_cm': specimen_height,
-        'specimens': specimens
+        'ring_calibration': {
+            'a': cal_a,
+            'b': cal_b,
+            'conv': cal_conv,
+        },
+        'test_speed_mm_min': 0.5,
+        'method': 'UU',
+        'sample_state': 'Natural',
+        'sample_type': 'Inalterada',
+        'humidity_verification': humidity_data,
+        'specimens': specimens,
     }
 
 
@@ -459,6 +733,10 @@ def generate_all_lab_data(params):
     
     # Corte Directo
     if 'friction_angle' in params and 'cohesion' in params:
-        result['shear'] = generate_shear_data(params['friction_angle'], params['cohesion'])
+        result['shear'] = generate_shear_data(
+            params['friction_angle'], params['cohesion'],
+            moisture_pct=params.get('moisture_pct'),
+            sucs=params.get('sucs')
+        )
     
     return result

@@ -22,6 +22,39 @@
         <!-- LEFT: Parameters Panel -->
         <div class="lg:col-span-1 space-y-4">
 
+            <!-- Zone Selector -->
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-violet-500">
+                <h3 class="font-bold text-gray-700 mb-3">🌎 Ubicación Geográfica</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Departamento</label>
+                        <select id="departmentSelect" onchange="onDepartmentChange()"
+                            class="w-full p-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500">
+                            <option value="">-- Opcional --</option>
+                            {% for key, dept in departments.items() %}
+                            <option value="{{ key }}" data-zone="{{ dept.zone }}">{{ key }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Altitud (m.s.n.m.)</label>
+                        <input type="number" id="altitudeInput" placeholder="ej: 3800" min="0" max="6000"
+                            onchange="loadSoilDefaults()"
+                            class="w-full p-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500">
+                    </div>
+                </div>
+                <select id="zoneSelect" onchange="loadSoilDefaults()"
+                    class="w-full p-3 border-2 border-violet-300 rounded-lg text-lg font-bold focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+                    <option value="">-- Sin zona (rangos nacionales) --</option>
+                    {% for key, zone in zone_profiles.items() %}
+                    <option value="{{ key }}" data-color="{{ zone.color }}">
+                        {{ zone.emoji }} {{ zone.label }} — {{ zone.description }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p id="zoneIndicator" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+
             <!-- SUCS Selector -->
             <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-emerald-500">
                 <h3 class="font-bold text-gray-700 mb-3">🏷️ Tipo de Suelo (SUCS)</h3>
@@ -113,7 +146,9 @@
                         <input type="number" id="L" step="0.1" value="1.0" class="w-full p-2 border rounded-lg text-sm">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500">Prof. Df (m)</label>
+                        <label class="text-xs text-gray-500">Prof. Df (m)
+                            <span id="dfAutoLabel" class="text-emerald-500 text-[10px] hidden">← auto</span>
+                        </label>
                         <input type="number" id="Df" step="0.1" value="1.5"
                             class="w-full p-2 border rounded-lg text-sm">
                     </div>
@@ -128,6 +163,40 @@
                             <option value="strip">Corrida</option>
                             <option value="circular">Circular</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- NTE E.050 Extended -->
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-gray-600">📐 NTE E.050</span>
+                        <span class="text-[10px] text-gray-400">Nivel Freático y Edificación</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-500">γsat (Tn/m³)</label>
+                            <input type="number" id="gamma_sat" step="0.01" value="" placeholder="ej: 1.9"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Prof. NF (m)</label>
+                            <input type="number" id="water_table" step="0.1" value="" placeholder="vacío = sin NF"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">N° Niveles</label>
+                            <input type="number" id="num_levels" step="1" value="" placeholder="auto Df"
+                                oninput="autoCalcDf()" class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Categoría</label>
+                            <select id="building_category" class="w-full p-2 border rounded-lg text-sm">
+                                <option value="">-- (opcional) --</option>
+                                <option value="A">A — Crítica</option>
+                                <option value="B" selected>B — Estándar</option>
+                                <option value="C">C — Menor</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -236,7 +305,25 @@
     // Soil parameters from CARTILLA (passed from backend)
     const SOIL_DB = {{ soil_params | tojson }};
 
+    // Zone profiles from backend
+    const ZONE_DB = {{ zone_profiles | tojson }};
+
+    // Department data from backend
+    const DEPT_DB = {{ departments | tojson }};
+
     let generatedHtml = null;
+
+    function onDepartmentChange() {
+        const dept = document.getElementById('departmentSelect').value;
+        if (dept && DEPT_DB[dept]) {
+            const deptData = DEPT_DB[dept];
+            // Auto-select zone
+            document.getElementById('zoneSelect').value = deptData.zone;
+            // Fill altitude with capital altitude
+            document.getElementById('altitudeInput').value = deptData.capital_alt;
+        }
+        loadSoilDefaults();
+    }
 
     function avg(range) {
         if (!range) return '';
@@ -245,34 +332,131 @@
 
     function loadSoilDefaults() {
         const sucs = document.getElementById('sucsSelect').value;
+        const zone = document.getElementById('zoneSelect').value;
         if (!sucs || !SOIL_DB[sucs]) return;
 
         const soil = SOIL_DB[sucs];
         document.getElementById('soilCategory').textContent = `Categoría: ${soil.category} — ${soil.name}`;
 
-        // Auto-fill with CARTILLA averages
-        document.getElementById('phi').value = avg(soil.phi);
-        document.getElementById('cohesion').value = avg(soil.cohesion);
-        document.getElementById('ll').value = soil.ll ? avg(soil.ll) : '';
-        document.getElementById('pl').value = soil.lp ? avg(soil.lp) : '';
-        document.getElementById('humedad').value = avg(soil.humedad);
-        document.getElementById('gs').value = soil.peso_especifico ? avg(soil.peso_especifico) : '2.65';
-        document.getElementById('mdd').value = avg(soil.gamma_seco);
-        document.getElementById('omc').value = avg(soil.humedad);
-        document.getElementById('fines_pct').value = soil.finos_percent ? avg(soil.finos_percent) : '50';
+        // Use zone-specific ranges if zone is selected, otherwise national ranges
+        let ranges = soil;
+        if (zone && ZONE_DB[zone] && ZONE_DB[zone][sucs]) {
+            ranges = ZONE_DB[zone][sucs];
+            const zi = ZONE_DB[zone];
+            document.getElementById('zoneIndicator').textContent =
+                `${zi.emoji} ${zi.label}: Rangos ajustados para ${sucs}`;
+            document.getElementById('zoneIndicator').style.color = zi.color;
+        } else if (zone) {
+            document.getElementById('zoneIndicator').textContent =
+                `⚠️ Sin perfil regional para ${sucs} en ${zone}, usando rangos nacionales`;
+            document.getElementById('zoneIndicator').style.color = '#F59E0B';
+        } else {
+            document.getElementById('zoneIndicator').textContent = '';
+        }
 
-        // Reset manual indicators
+        // Auto-fill with zone-specific or CARTILLA averages
+        document.getElementById('phi').value = avg(ranges.phi || soil.phi);
+        document.getElementById('cohesion').value = avg(ranges.cohesion || soil.cohesion);
+        document.getElementById('ll').value = (ranges.ll || soil.ll) ? avg(ranges.ll || soil.ll) : '';
+        document.getElementById('pl').value = (ranges.lp || soil.lp) ? avg(ranges.lp || soil.lp) : '';
+        document.getElementById('humedad').value = avg(ranges.humedad || soil.humedad);
+        document.getElementById('gs').value = (ranges.peso_especifico || soil.peso_especifico) ? avg(ranges.peso_especifico || soil.peso_especifico) : '2.65';
+        document.getElementById('mdd').value = (ranges.mdd || soil.mdd) ? avg(ranges.mdd || soil.mdd) : '';
+        document.getElementById('omc').value = (ranges.omc || soil.omc) ? avg(ranges.omc || soil.omc) : '';
+        document.getElementById('fines_pct').value = (ranges.finos_percent || soil.finos_percent) ? avg(ranges.finos_percent || soil.finos_percent) : '50';
+
+        // Reset manual indicators + validate all fields
         document.querySelectorAll('.param-input').forEach(el => {
-            el.classList.remove('border-amber-400', 'bg-amber-50');
+            el.classList.remove('border-amber-400', 'bg-amber-50',
+                'border-red-400', 'bg-red-50');
             el.classList.add('border-emerald-300', 'bg-emerald-50');
+            // Remove any warning tooltip
+            const tip = el.parentElement.querySelector('.range-tip');
+            if (tip) tip.remove();
         });
         document.getElementById('modeIndicator').textContent = 'Automático';
         document.getElementById('modeIndicator').className = 'text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full';
     }
 
+    function autoCalcDf() {
+        const n = parseInt(document.getElementById('num_levels').value);
+        if (!n || n < 1) {
+            document.getElementById('dfAutoLabel').classList.add('hidden');
+            return;
+        }
+        const df = Math.max(1.0, 0.80 + 0.20 * (n - 2));
+        document.getElementById('Df').value = df.toFixed(2);
+        document.getElementById('dfAutoLabel').classList.remove('hidden');
+    }
+
+    // Mapping: input element ID → SOIL_DB parameter key
+    const FIELD_RANGE_MAP = {
+        'phi': 'phi',
+        'cohesion': 'cohesion',
+        'll': 'll',
+        'pl': 'lp',
+        'humedad': 'humedad',
+        'gs': 'peso_especifico',
+        'mdd': 'mdd',
+        'omc': 'omc',
+        'fines_pct': 'finos_percent'
+    };
+
+    function validateField(el) {
+        const sucs = document.getElementById('sucsSelect').value;
+        if (!sucs || !SOIL_DB[sucs]) return;
+
+        const soil = SOIL_DB[sucs];
+        const fieldId = el.id;
+        const rangeKey = FIELD_RANGE_MAP[fieldId];
+        if (!rangeKey || !soil[rangeKey]) return;
+
+        const range = soil[rangeKey];
+        const val = parseFloat(el.value);
+        if (isNaN(val)) return;
+
+        // Remove old tooltip
+        const oldTip = el.parentElement.querySelector('.range-tip');
+        if (oldTip) oldTip.remove();
+
+        const [min, max] = range;
+        const span = max - min;
+        const tolerance = span * 0.15;
+
+        // Reset classes
+        el.classList.remove('border-emerald-300', 'bg-emerald-50',
+            'border-amber-400', 'bg-amber-50',
+            'border-red-400', 'bg-red-50');
+
+        if (val >= min && val <= max) {
+            // In range — green
+            el.classList.add('border-emerald-300', 'bg-emerald-50');
+        } else if (val >= (min - tolerance) && val <= (max + tolerance)) {
+            // Slightly outside — amber warning
+            el.classList.add('border-amber-400', 'bg-amber-50');
+            const tip = document.createElement('div');
+            tip.className = 'range-tip text-xs text-amber-600 mt-1';
+            tip.textContent = `⚠️ Ligeramente fuera del rango (${min} - ${max})`;
+            el.parentElement.appendChild(tip);
+        } else {
+            // Far outside — red error
+            el.classList.add('border-red-400', 'bg-red-50');
+            const tip = document.createElement('div');
+            tip.className = 'range-tip text-xs text-red-600 mt-1';
+            tip.textContent = `❌ Fuera del rango esperado (${min} - ${max})`;
+            el.parentElement.appendChild(tip);
+        }
+    }
+
     function markManual(el) {
-        el.classList.remove('border-emerald-300', 'bg-emerald-50');
-        el.classList.add('border-amber-400', 'bg-amber-50');
+        // Validate against cartilla range
+        validateField(el);
+
+        // If not in range styling already set by validateField, ensure amber minimum
+        if (!el.classList.contains('border-red-400') && !el.classList.contains('border-amber-400')) {
+            // Value is in range but manually edited — keep green but mark hybrid
+        }
+
         document.getElementById('modeIndicator').textContent = 'Híbrido';
         document.getElementById('modeIndicator').className = 'text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full';
     }
@@ -317,6 +501,9 @@
         try {
             const payload = {
                 sucs,
+                zone: document.getElementById('zoneSelect').value || '',
+                department: document.getElementById('departmentSelect').value || '',
+                altitude: document.getElementById('altitudeInput').value || '',
                 phi: document.getElementById('phi').value || 25,
                 cohesion: document.getElementById('cohesion').value || 0.05,
                 ll: document.getElementById('ll').value || 30,
@@ -331,6 +518,10 @@
                 Df: document.getElementById('Df').value,
                 FS: document.getElementById('FS').value,
                 foundation_type: document.getElementById('foundation_type').value,
+                gamma_sat: document.getElementById('gamma_sat').value || '',
+                water_table: document.getElementById('water_table').value || '',
+                num_levels: document.getElementById('num_levels').value || '',
+                building_category: document.getElementById('building_category').value || '',
                 proyecto: document.getElementById('proyecto').value,
                 ubicacion: document.getElementById('ubicacion').value,
                 solicitante: document.getElementById('solicitante').value,

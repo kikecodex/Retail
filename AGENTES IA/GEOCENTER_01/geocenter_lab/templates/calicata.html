@@ -1,28 +1,62 @@
 {% extends "base.html" %}
 
-{% block header %}Modo Calicata - Ingreso Unificado{% endblock %}
+{% block header %}Ingreso de Datos de Laboratorio{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
 
     <!-- Header -->
-    <div class="mb-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg">
-        <div class="flex justify-between items-center">
+    <div class="mb-4 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-5 text-white shadow-lg">
+        <div class="flex justify-between items-center flex-wrap gap-3">
             <div>
-                <h2 class="text-2xl font-bold">📋 Modo Calicata Unificado</h2>
-                <p class="text-blue-100 mt-1">Ingresa todos los datos de laboratorio y calcula todos los ensayos con un
-                    solo clic</p>
+                <h2 class="text-2xl font-bold">📋 Ingreso de Datos de Laboratorio</h2>
+                <p class="text-blue-100 mt-1" id="wizard-subtitle">Paso 1 de 8 — Completa los datos del proyecto</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="loadSampleData()"
-                    class="bg-yellow-400 text-yellow-900 px-4 py-3 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-lg flex items-center gap-2">
-                    📥 Cargar Ejemplo
-                </button>
-                <button onclick="calculateAll()"
-                    class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg flex items-center gap-2">
-                    ⚡ CALCULAR TODO
-                </button>
-            </div>
+        </div>
+    </div>
+
+    <!-- Progress Stepper -->
+    <div class="mb-4 flex items-center justify-between bg-white rounded-xl shadow p-3 text-xs font-bold overflow-x-auto gap-1"
+        id="stepper-bar">
+        <div class="step-dot flex items-center gap-1 cursor-pointer" onclick="goToStep(0)">
+            <span
+                class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center transition-all">1</span>
+            <span class="hidden sm:inline">Proyecto</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(1)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">2</span>
+            <span class="hidden sm:inline">Granulom.</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(2)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">3</span>
+            <span class="hidden sm:inline">Humedad</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(3)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">4</span>
+            <span class="hidden sm:inline">Límites</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(4)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">5</span>
+            <span class="hidden sm:inline">Gs</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(5)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">6</span>
+            <span class="hidden sm:inline">Corte</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(6)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">7</span>
+            <span class="hidden sm:inline">Proctor</span>
+        </div>
+        <div class="text-gray-300">→</div>
+        <div class="step-dot flex items-center gap-1 text-gray-400 cursor-pointer" onclick="goToStep(7)">
+            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center transition-all">8</span>
+            <span class="hidden sm:inline">Ciment.</span>
         </div>
     </div>
 
@@ -31,188 +65,128 @@
         <!-- LEFT: Data Entry -->
         <div class="lg:col-span-2 space-y-4">
 
-            <!-- Project Info -->
-            <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center cursor-pointer"
-                    onclick="toggleSection('project')">
-                    <h3 class="font-bold text-gray-700">📁 Datos del Proyecto</h3>
-                    <span id="arrow-project" class="text-gray-400">▼</span>
+            <!-- 1. Project Info -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden" data-step="0">
+                <div class="bg-gray-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-gray-700">📁 1. Datos del Proyecto</h3>
+                    <p class="text-xs text-gray-500 mt-1">👉 Completa el nombre del proyecto, ubicación, calicata y
+                        demás datos generales del estudio.</p>
                 </div>
-                <div id="section-project" class="p-4 grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cliente</label>
-                        <input type="text" id="client" class="w-full border rounded-lg p-2"
-                            value="MUNICIPALIDAD DISTRITAL">
+                <div id="section-project" class="p-4 grid grid-cols-2 gap-3 text-sm">
+                    <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proyecto
+                            (Nombre)</label>
+                        <input type="text" id="proj-nombre" class="w-full border rounded-lg p-2"
+                            placeholder="MEJORAMIENTO Y AMPLIACION...">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Proyecto</label>
-                        <input type="text" id="project" class="w-full border rounded-lg p-2"
-                            value="MEJORAMIENTO DE VIA">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicación</label>
+                        <input type="text" id="proj-ubicacion" class="w-full border rounded-lg p-2"
+                            placeholder="CP. JANGAS - HUARAZ">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Calicata</label>
-                        <input type="text" id="calicataId" class="w-full border rounded-lg p-2" value="C-01">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Región Geográfica</label>
+                        <select id="proj-zone" class="w-full border rounded-lg p-2">
+                            <option value="">-- Sin zona --</option>
+                            {% for key, zone in zone_profiles.items() %}
+                            <option value="{{ key }}">{{ zone.emoji }} {{ zone.label }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profundidad (m)</label>
-                        <input type="number" id="depth" step="0.01" class="w-full border rounded-lg p-2" value="1.50">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Solicitante</label>
+                        <input type="text" id="proj-solicitante" class="w-full border rounded-lg p-2"
+                            placeholder="ALDO ROSARIO">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Calicata</label>
+                        <input type="text" id="proj-calicata" class="w-full border rounded-lg p-2" placeholder="C-1">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profundidad</label>
+                        <input type="text" id="proj-profundidad" class="w-full border rounded-lg p-2"
+                            placeholder="1.50 m">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Muestra</label>
+                        <input type="text" id="proj-muestra" class="w-full border rounded-lg p-2" placeholder="Mab-01">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha</label>
+                        <input type="text" id="proj-fecha" class="w-full border rounded-lg p-2"
+                            placeholder="01/01/2026">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Técnico</label>
+                        <input type="text" id="proj-tecnico" class="w-full border rounded-lg p-2"
+                            placeholder="Iniciales">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Solicitud Nro</label>
+                        <input type="text" id="proj-solicitud" class="w-full border rounded-lg p-2"
+                            placeholder="J-001-2026">
                     </div>
                 </div>
             </div>
 
-            <!-- Granulometry -->
-            <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                <div class="bg-blue-50 px-4 py-3 border-b flex justify-between items-center cursor-pointer"
-                    onclick="toggleSection('granulometry')">
-                    <h3 class="font-bold text-blue-700">🔬 Granulometría</h3>
-                    <span id="arrow-granulometry" class="text-blue-400">▼</span>
+            <!-- 2. Granulometry -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="1">
+                <div class="bg-blue-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-blue-700">🔬 2. Granulometría (NTP 339.128)</h3>
+                    <p class="text-xs text-blue-600 mt-1">👉 Ingresa el peso total seco, el peso lavado en malla N°200,
+                        y la masa retenida en cada tamiz de arriba hacia abajo.</p>
                 </div>
                 <div id="section-granulometry" class="p-4">
-                    <div class="mb-4">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Peso Total Muestra Seca
-                            (gr)</label>
-                        <input type="number" id="gran-total" class="w-48 border rounded-lg p-2" placeholder="5000">
+                    <div class="mb-3 flex gap-4">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Peso Total Seco (gr)</label>
+                            <input type="number" id="gran-total" class="w-40 border rounded-lg p-2"
+                                placeholder="Ej: 500">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Peso Lavado Malla 200
+                                (gr)</label>
+                            <input type="number" id="gran-lavado" class="w-40 border rounded-lg p-2"
+                                placeholder="Ej: 400">
+                        </div>
                     </div>
                     <table class="w-full text-sm">
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="p-2 text-left">Tamiz</th>
                                 <th class="p-2">Abertura (mm)</th>
-                                <th class="p-2">Masa Ret. (gr)</th>
+                                <th class="p-2">🔴 Masa Ret. (gr)</th>
                             </tr>
                         </thead>
-                        <tbody id="gran-sieves">
-                            <!-- Generated by JS -->
-                        </tbody>
+                        <tbody id="gran-sieves"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Limits -->
-            <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                <div class="bg-purple-50 px-4 py-3 border-b flex justify-between items-center cursor-pointer"
-                    onclick="toggleSection('limits')">
-                    <h3 class="font-bold text-purple-700">📏 Límites de Atterberg</h3>
-                    <span id="arrow-limits" class="text-purple-400">▼</span>
-                </div>
-                <div id="section-limits" class="p-4 space-y-4">
-                    <!-- Liquid Limit -->
-                    <div>
-                        <h4 class="font-semibold text-sm text-gray-600 mb-2">Límite Líquido (LL)</h4>
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="p-2">Golpes</th>
-                                    <th class="p-2">Tara (gr)</th>
-                                    <th class="p-2">Húm+Tara</th>
-                                    <th class="p-2">Seco+Tara</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b">
-                                    <td class="p-2"><input type="number" id="ll-blows-1"
-                                            class="w-16 border rounded p-1 text-center" value="35"></td>
-                                    <td class="p-2"><input type="number" id="ll-tare-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-wet-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-dry-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                </tr>
-                                <tr class="border-b">
-                                    <td class="p-2"><input type="number" id="ll-blows-2"
-                                            class="w-16 border rounded p-1 text-center" value="28"></td>
-                                    <td class="p-2"><input type="number" id="ll-tare-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-wet-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-dry-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2"><input type="number" id="ll-blows-3"
-                                            class="w-16 border rounded p-1 text-center" value="18"></td>
-                                    <td class="p-2"><input type="number" id="ll-tare-3" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-wet-3" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="ll-dry-3" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Plastic Limit -->
-                    <div>
-                        <h4 class="font-semibold text-sm text-gray-600 mb-2">Límite Plástico (LP)</h4>
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="p-2">Muestra</th>
-                                    <th class="p-2">Tara (gr)</th>
-                                    <th class="p-2">Húm+Tara</th>
-                                    <th class="p-2">Seco+Tara</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b">
-                                    <td class="p-2 text-center">1</td>
-                                    <td class="p-2"><input type="number" id="pl-tare-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="pl-wet-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="pl-dry-1" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2 text-center">2</td>
-                                    <td class="p-2"><input type="number" id="pl-tare-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="pl-wet-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                    <td class="p-2"><input type="number" id="pl-dry-2" class="w-20 border rounded p-1"
-                                            step="0.01"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Natural Moisture -->
-            <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                <div class="bg-cyan-50 px-4 py-3 border-b flex justify-between items-center cursor-pointer"
-                    onclick="toggleSection('moisture')">
-                    <h3 class="font-bold text-cyan-700">💧 Humedad Natural</h3>
-                    <span id="arrow-moisture" class="text-cyan-400">▼</span>
+            <!-- 3. Moisture -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="2">
+                <div class="bg-cyan-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-cyan-700">💧 3. Humedad Natural (NTP 339.127)</h3>
+                    <p class="text-xs text-cyan-600 mt-1">👉 Para cada muestra ingresa: Mcws (peso húmedo + contenedor),
+                        Mcs (peso seco + contenedor) y Mc (peso del contenedor vacío).</p>
                 </div>
                 <div id="section-moisture" class="p-4">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="p-2">Muestra</th>
-                                <th class="p-2">Tara (gr)</th>
-                                <th class="p-2">Húm+Tara</th>
-                                <th class="p-2">Seco+Tara</th>
+                                <th class="p-2">🔴 Mcws (Húm+Cont)</th>
+                                <th class="p-2">🔴 Mcs (Seco+Cont)</th>
+                                <th class="p-2">🔴 Mc (Contenedor)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="border-b">
-                                <td class="p-2 text-center">1</td>
-                                <td class="p-2"><input type="number" id="moist-tare-1" class="w-20 border rounded p-1"
+                                <td class="p-2 text-center">M-01</td>
+                                <td class="p-2"><input type="number" id="moist-mcws-1" class="w-24 border rounded p-1"
                                         step="0.01"></td>
-                                <td class="p-2"><input type="number" id="moist-wet-1" class="w-20 border rounded p-1"
+                                <td class="p-2"><input type="number" id="moist-mcs-1" class="w-24 border rounded p-1"
                                         step="0.01"></td>
-                                <td class="p-2"><input type="number" id="moist-dry-1" class="w-20 border rounded p-1"
+                                <td class="p-2"><input type="number" id="moist-mc-1" class="w-24 border rounded p-1"
                                         step="0.01"></td>
                             </tr>
                             <tr>
-                                <td class="p-2 text-center">2</td>
-                                <td class="p-2"><input type="number" id="moist-tare-2" class="w-20 border rounded p-1"
+                                <td class="p-2 text-center">M-02</td>
+                                <td class="p-2"><input type="number" id="moist-mcws-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
-                                <td class="p-2"><input type="number" id="moist-wet-2" class="w-20 border rounded p-1"
+                                <td class="p-2"><input type="number" id="moist-mcs-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
-                                <td class="p-2"><input type="number" id="moist-dry-2" class="w-20 border rounded p-1"
+                                <td class="p-2"><input type="number" id="moist-mc-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
                             </tr>
                         </tbody>
@@ -220,81 +194,330 @@
                 </div>
             </div>
 
-            <!-- Direct Shear (simplified) -->
-            <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                <div class="bg-red-50 px-4 py-3 border-b flex justify-between items-center cursor-pointer"
-                    onclick="toggleSection('shear')">
-                    <h3 class="font-bold text-red-700">✂️ Corte Directo (Resumido)</h3>
-                    <span id="arrow-shear" class="text-red-400">▼</span>
+            <!-- 4. Limits -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="3">
+                <div class="bg-purple-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-purple-700">📏 4. Límites de Consistencia (NTP 339.129)</h3>
+                    <p class="text-xs text-purple-600 mt-1">👉 Para Límite Líquido: ingresa N° de golpes y pesos
+                        (húmedo, seco, recipiente) de 4 determinaciones. Para Límite Plástico: 3 determinaciones.</p>
                 </div>
-                <div id="section-shear" class="p-4">
-                    <p class="text-sm text-gray-500 mb-3">Ingresa los resultados ya procesados de cada espécimen:</p>
+                <div id="section-limits" class="p-4 space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-sm text-gray-600 mb-2">Límite Líquido (LL) — 4 determinaciones
+                        </h4>
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">N° Frasco</th>
+                                    <th class="p-2">🔴 Golpes</th>
+                                    <th class="p-2">🔴 Húm+Rec (gr)</th>
+                                    <th class="p-2">🔴 Seco+Rec (gr)</th>
+                                    <th class="p-2">🔴 Peso Rec (gr)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="p-2 text-center">1</td>
+                                    <td class="p-2"><input type="number" id="ll-blows-1"
+                                            class="w-16 border rounded p-1 text-center"></td>
+                                    <td class="p-2"><input type="number" id="ll-wet-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-dry-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-tare-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="p-2 text-center">2</td>
+                                    <td class="p-2"><input type="number" id="ll-blows-2"
+                                            class="w-16 border rounded p-1 text-center"></td>
+                                    <td class="p-2"><input type="number" id="ll-wet-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-dry-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-tare-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="p-2 text-center">3</td>
+                                    <td class="p-2"><input type="number" id="ll-blows-3"
+                                            class="w-16 border rounded p-1 text-center"></td>
+                                    <td class="p-2"><input type="number" id="ll-wet-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-dry-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-tare-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 text-center">4</td>
+                                    <td class="p-2"><input type="number" id="ll-blows-4"
+                                            class="w-16 border rounded p-1 text-center"></td>
+                                    <td class="p-2"><input type="number" id="ll-wet-4" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-dry-4" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="ll-tare-4" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm text-gray-600 mb-2">Límite Plástico (LP) — 3 determinaciones
+                        </h4>
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">N° Frasco</th>
+                                    <th class="p-2">🔴 Húm+Rec (gr)</th>
+                                    <th class="p-2">🔴 Seco+Rec (gr)</th>
+                                    <th class="p-2">🔴 Peso Rec (gr)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="p-2 text-center">1</td>
+                                    <td class="p-2"><input type="number" id="pl-wet-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-dry-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-tare-1" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="p-2 text-center">2</td>
+                                    <td class="p-2"><input type="number" id="pl-wet-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-dry-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-tare-2" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 text-center">3</td>
+                                    <td class="p-2"><input type="number" id="pl-wet-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-dry-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                    <td class="p-2"><input type="number" id="pl-tare-3" class="w-20 border rounded p-1"
+                                            step="0.01"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Specific Gravity -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="4">
+                <div class="bg-amber-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-amber-700">⚖️ 5. Peso Específico (NTP 339.131)</h3>
+                    <p class="text-xs text-amber-600 mt-1">👉 Para cada porción ingresa: Ma (picnómetro + agua), Mb
+                        (picnómetro + agua + suelo), A (muestra seca + recipiente) y B (peso del recipiente).</p>
+                </div>
+                <div id="section-gs" class="p-4">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="p-2">Espécimen</th>
-                                <th class="p-2">σ Normal (kg/cm²)</th>
-                                <th class="p-2">τ Máximo (kg/cm²)</th>
+                                <th class="p-2">Dato</th>
+                                <th class="p-2">🔴 Porción 1</th>
+                                <th class="p-2">🔴 Porción 2</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="border-b">
-                                <td class="p-2 text-center font-bold">1</td>
-                                <td class="p-2"><input type="number" id="shear-sigma-1" class="w-24 border rounded p-1"
-                                        step="0.01" value="0.5"></td>
-                                <td class="p-2"><input type="number" id="shear-tau-1" class="w-24 border rounded p-1"
+                                <td class="p-2 font-medium">Ma (Picnóm. + agua) gr</td>
+                                <td class="p-2"><input type="number" id="gs-ma-1" class="w-24 border rounded p-1"
+                                        step="0.01"></td>
+                                <td class="p-2"><input type="number" id="gs-ma-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
                             </tr>
                             <tr class="border-b">
-                                <td class="p-2 text-center font-bold">2</td>
-                                <td class="p-2"><input type="number" id="shear-sigma-2" class="w-24 border rounded p-1"
-                                        step="0.01" value="1.0"></td>
-                                <td class="p-2"><input type="number" id="shear-tau-2" class="w-24 border rounded p-1"
+                                <td class="p-2 font-medium">Mb (Picnóm. + agua + suelo) gr</td>
+                                <td class="p-2"><input type="number" id="gs-mb-1" class="w-24 border rounded p-1"
+                                        step="0.01"></td>
+                                <td class="p-2"><input type="number" id="gs-mb-2" class="w-24 border rounded p-1"
+                                        step="0.01"></td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-2 font-medium">A (Muestra seca + recip.) gr</td>
+                                <td class="p-2"><input type="number" id="gs-a-1" class="w-24 border rounded p-1"
+                                        step="0.01"></td>
+                                <td class="p-2"><input type="number" id="gs-a-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
                             </tr>
                             <tr>
-                                <td class="p-2 text-center font-bold">3</td>
-                                <td class="p-2"><input type="number" id="shear-sigma-3" class="w-24 border rounded p-1"
-                                        step="0.01" value="1.5"></td>
-                                <td class="p-2"><input type="number" id="shear-tau-3" class="w-24 border rounded p-1"
+                                <td class="p-2 font-medium">B (Peso recipiente) gr</td>
+                                <td class="p-2"><input type="number" id="gs-b-1" class="w-24 border rounded p-1"
+                                        step="0.01"></td>
+                                <td class="p-2"><input type="number" id="gs-b-2" class="w-24 border rounded p-1"
                                         step="0.01"></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- 6. Direct Shear -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="5">
+                <div class="bg-red-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-red-700">✂️ 6. Corte Directo (ASTM D3080)</h3>
+                    <p class="text-xs text-red-600 mt-1">👉 Ingresa parámetros del espécimen (lado, altura, densidad,
+                        humedad). Luego para cada carga σ, ingresa los 14 valores de esfuerzo cortante τ en la tabla.
+                    </p>
+                </div>
+                <div id="section-shear" class="p-4 space-y-3">
+                    <div class="grid grid-cols-4 gap-3 text-sm mb-2">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Lado (cm)</label>
+                            <input type="number" id="shear-side" class="w-full border rounded p-1" step="0.01"
+                                placeholder="6.00">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Altura (cm)</label>
+                            <input type="number" id="shear-height" class="w-full border rounded p-1" step="0.01"
+                                placeholder="2.54">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Densidad Seca (g/cm³)</label>
+                            <input type="number" id="shear-density" class="w-full border rounded p-1" step="0.01"
+                                placeholder="1.52">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Humedad Inicial (%)</label>
+                            <input type="number" id="shear-moisture" class="w-full border rounded p-1" step="0.01"
+                                placeholder="6.07">
+                        </div>
+                    </div>
+                    <!-- 3 specimens with full curves -->
+                    <div id="shear-specimens"></div>
+                </div>
+            </div>
+
+            <!-- 7. Proctor -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="6">
+                <div class="bg-green-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-green-700">🔨 7. Proctor Modificado (ASTM D1557)</h3>
+                    <p class="text-xs text-green-600 mt-1">👉 Ingresa parámetros del molde. Luego para cada punto: peso
+                        molde+muestra, ID del tarro, y pesos (húmedo+tarro, seco+tarro, tarro).</p>
+                </div>
+                <div id="section-proctor" class="p-4 space-y-3">
+                    <div class="grid grid-cols-4 gap-3 text-sm mb-2">
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Vol. Molde (cm³)</label>
+                            <input type="number" id="proctor-vol" class="w-full border rounded p-1" placeholder="944">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Peso Molde (gr)</label>
+                            <input type="number" id="proctor-mold" class="w-full border rounded p-1" placeholder="4180">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">N° Capas</label>
+                            <input type="number" id="proctor-layers" class="w-full border rounded p-1" placeholder="5">
+                        </div>
+                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Golpes/Capa</label>
+                            <input type="number" id="proctor-blows" class="w-full border rounded p-1" placeholder="25">
+                        </div>
+                    </div>
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2">Pto</th>
+                                <th class="p-2">🔴 Wm+m (gr)</th>
+                                <th class="p-2">🔴 Tarro</th>
+                                <th class="p-2">🔴 Wh+t (gr)</th>
+                                <th class="p-2">🔴 Ws+t (gr)</th>
+                                <th class="p-2">🔴 Wt (gr)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proctor-points"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 8. Foundation -->
+            <div class="wizard-section bg-white rounded-xl shadow border border-gray-100 overflow-hidden hidden"
+                data-step="7">
+                <div class="bg-indigo-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-indigo-700">🏗️ 8. Parámetros de Cimentación</h3>
+                    <p class="text-xs text-indigo-600 mt-1">👉 Último paso. Define ancho (B), largo (L), profundidad
+                        (Df), factor de seguridad (FS) y el tipo de cimentación y falla.</p>
+                </div>
+                <div id="section-foundation" class="p-4 grid grid-cols-3 gap-3 text-sm">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">B (Ancho, m)</label>
+                        <input type="number" id="found-b" class="w-full border rounded p-1" step="0.01"
+                            placeholder="1.00">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">L (Largo, m)</label>
+                        <input type="number" id="found-l" class="w-full border rounded p-1" step="0.01"
+                            placeholder="1.00">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Df (Profundidad, m)</label>
+                        <input type="number" id="found-df" class="w-full border rounded p-1" step="0.01"
+                            placeholder="1.50">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">FS (Factor Seguridad)</label>
+                        <input type="number" id="found-fs" class="w-full border rounded p-1" step="0.1" placeholder="3">
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Tipo Cimentación</label>
+                        <select id="found-type" class="w-full border rounded p-1">
+                            <option value="square">Cuadrada</option>
+                            <option value="strip">Corrida</option>
+                            <option value="circular">Circular</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Tipo Falla</label>
+                        <select id="found-failure" class="w-full border rounded p-1">
+                            <option value="local">Corte Local</option>
+                            <option value="general">Corte General</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-4" id="wizard-nav">
+                <button onclick="prevStep()" id="btn-prev"
+                    class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all flex items-center gap-2 hidden">
+                    ← Anterior
+                </button>
+                <div class="flex-1"></div>
+                <button onclick="nextStep()" id="btn-next"
+                    class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg">
+                    Siguiente →
+                </button>
+                <button onclick="calculateAllAndReport()" id="btn-calculate"
+                    class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg hidden">
+                    🚀 CALCULAR Y GENERAR REPORTE
+                </button>
             </div>
 
         </div>
 
         <!-- RIGHT: Results Panel -->
         <div class="space-y-4">
-
-            <!-- Status -->
             <div id="status-panel" class="bg-gray-100 rounded-xl p-4 text-center">
                 <div class="text-gray-400 text-4xl mb-2">📊</div>
-                <p class="text-gray-500">Ingresa los datos y presiona <strong>"CALCULAR TODO"</strong></p>
+                <p class="text-gray-500">Completa los 8 pasos y presiona<br><strong>"CALCULAR Y GENERAR
+                        REPORTE"</strong></p>
+                <div class="mt-3 text-left text-xs space-y-1" id="step-checklist">
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 1. Proyecto</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 2. Granulometría</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 3. Humedad</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 4. Límites</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 5. Peso Específico</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 6. Corte Directo</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 7. Proctor</div>
+                    <div class="flex items-center gap-2 text-gray-400"><span>⬜</span> 8. Cimentación</div>
+                </div>
             </div>
 
-            <!-- Results Cards (hidden initially) -->
             <div id="results-panel" class="hidden space-y-3">
-
-                <!-- SUCS Classification -->
                 <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 text-white text-center">
                     <div class="text-xs uppercase tracking-wide opacity-70">Clasificación SUCS</div>
                     <div id="res-sucs" class="text-4xl font-black">--</div>
                     <div id="res-sucs-name" class="text-sm opacity-80">--</div>
                 </div>
 
-                <!-- Key Parameters -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-blue-500">
-                        <div class="text-xs text-gray-500">% Finos</div>
-                        <div id="res-finos" class="text-xl font-bold">--</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-purple-500">
-                        <div class="text-xs text-gray-500">IP</div>
-                        <div id="res-ip" class="text-xl font-bold">--</div>
-                    </div>
                     <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-green-500">
                         <div class="text-xs text-gray-500">φ (°)</div>
                         <div id="res-phi" class="text-xl font-bold">--</div>
@@ -315,292 +538,337 @@
                         <div class="text-xs text-gray-500">Humedad %</div>
                         <div id="res-moisture" class="text-xl font-bold">--</div>
                     </div>
+                    <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-blue-500">
+                        <div class="text-xs text-gray-500">Gs</div>
+                        <div id="res-gs" class="text-xl font-bold">--</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-teal-500">
+                        <div class="text-xs text-gray-500">MDD (g/cm³)</div>
+                        <div id="res-mdd" class="text-xl font-bold">--</div>
+                    </div>
                     <div class="bg-white rounded-xl shadow p-3 text-center border-l-4 border-red-500">
-                        <div class="text-xs text-gray-500">Cu</div>
-                        <div id="res-cu" class="text-xl font-bold">--</div>
+                        <div class="text-xs text-gray-500">qa (kg/cm²)</div>
+                        <div id="res-qa" class="text-xl font-bold">--</div>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="space-y-2">
-                    <a href="/reporte_print" target="_blank"
-                        class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 rounded-xl font-bold transition-all">
-                        📄 VER REPORTE COMPLETO
-                    </a>
-                    <button onclick="saveCalicata()"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl font-semibold transition-all">
-                        💾 Guardar en Base de Datos
-                    </button>
-                </div>
-
+                <button onclick="openReport()"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition-all text-lg">
+                    📄 VER REPORTE COMPLETO
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Sieve configuration
+    // Sieve configuration (CP-Jangas)
     const SIEVES = [
-        { label: '3"', size: 75.0 },
-        { label: '1 1/2"', size: 37.5 },
-        { label: '3/4"', size: 19.0 },
-        { label: '3/8"', size: 9.5 },
-        { label: '# 4', size: 4.75 },
-        { label: '# 8', size: 2.36 },
-        { label: '# 16', size: 1.18 },
-        { label: '# 30', size: 0.60 },
-        { label: '# 50', size: 0.30 },
-        { label: '# 100', size: 0.15 },
-        { label: '# 200', size: 0.075 }
+        { label: '3"', mm: 75 }, { label: '2"', mm: 50 }, { label: '1 1/2"', mm: 37.5 }, { label: '1"', mm: 25 },
+        { label: '3/4"', mm: 19 }, { label: '3/8"', mm: 9.5 }, { label: 'N4', mm: 4.75 }, { label: 'N10', mm: 2 },
+        { label: 'N20', mm: 0.85 }, { label: 'N40', mm: 0.425 }, { label: 'N60', mm: 0.25 }, { label: 'N100', mm: 0.15 }, { label: 'N200', mm: 0.075 }
     ];
 
+    const SHEAR_STRAINS = [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15]; // CP-Jangas 14 points
+
     function initSieveTable() {
-        const tbody = document.getElementById('gran-sieves');
-        tbody.innerHTML = SIEVES.map(s => `
-            <tr class="border-b">
-                <td class="p-2 font-medium">${s.label}</td>
-                <td class="p-2 text-gray-500 text-center">${s.size}</td>
-                <td class="p-2"><input type="number" step="0.01" class="gran-input w-24 border rounded p-1" data-size="${s.label}" data-mm="${s.size}"></td>
-            </tr>
-        `).join('');
+        document.getElementById('gran-sieves').innerHTML = SIEVES.map(s => `
+        <tr class="border-b"><td class="p-2 font-medium">${s.label}</td>
+        <td class="p-2 text-gray-500 text-center">${s.mm}</td>
+        <td class="p-2"><input type="number" step="0.01" class="gran-input w-24 border rounded p-1" data-label="${s.label}" data-mm="${s.mm}"></td></tr>
+    `).join('');
     }
 
-    function toggleSection(name) {
-        const section = document.getElementById('section-' + name);
-        const arrow = document.getElementById('arrow-' + name);
-        section.classList.toggle('hidden');
-        arrow.textContent = section.classList.contains('hidden') ? '▶' : '▼';
+    function initShearSpecimens() {
+        let html = '';
+        [0.50, 1.00, 1.50].forEach((sigma, i) => {
+            html += `<div class="border rounded-lg p-3 mb-2">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-bold text-sm">Espécimen ${String.fromCharCode(65 + i)} — σ = </span>
+                <input type="number" id="shear-sigma-${i + 1}" class="w-20 border rounded p-1 text-center font-bold" step="0.01" value="${sigma}"> kg/cm²
+            </div>
+            <table class="w-full text-xs">
+                <thead class="bg-gray-50"><tr><th class="p-1">ε (%)</th>`;
+            SHEAR_STRAINS.forEach(e => { html += `<th class="p-1">${e}</th>`; });
+            html += `</tr></thead><tbody><tr><td class="p-1 font-bold">🔴 τ</td>`;
+            SHEAR_STRAINS.forEach((e, j) => {
+                html += `<td class="p-1"><input type="number" id="shear-tau-${i + 1}-${j + 1}" class="w-12 border rounded p-0.5 text-center text-[10px]" step="0.01"></td>`;
+            });
+            html += `</tr></tbody></table></div>`;
+        });
+        document.getElementById('shear-specimens').innerHTML = html;
     }
 
-    async function calculateAll() {
+    function initProctorPoints() {
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            html += `<tr class="border-b">
+            <td class="p-2 text-center font-bold">${i}</td>
+            <td class="p-2"><input type="number" id="proctor-wm-${i}" class="w-20 border rounded p-1" step="0.1"></td>
+            <td class="p-2"><input type="text" id="proctor-tare-id-${i}" class="w-16 border rounded p-1 text-center" value="T-${i}"></td>
+            <td class="p-2"><input type="number" id="proctor-wht-${i}" class="w-20 border rounded p-1" step="0.01"></td>
+            <td class="p-2"><input type="number" id="proctor-wst-${i}" class="w-20 border rounded p-1" step="0.01"></td>
+            <td class="p-2"><input type="number" id="proctor-wt-${i}" class="w-20 border rounded p-1" step="0.01"></td>
+        </tr>`;
+        }
+        document.getElementById('proctor-points').innerHTML = html;
+    }
+
+    // ===== WIZARD NAVIGATION =====
+    let currentStep = 0;
+    const TOTAL_STEPS = 8;
+    const STEP_NAMES = ['Proyecto', 'Granulometría', 'Humedad', 'Límites', 'Peso Específico', 'Corte Directo', 'Proctor', 'Cimentación'];
+    const STEP_INSTRUCTIONS = [
+        'Completa los datos del proyecto',
+        'Ingresa los pesos retenidos por tamiz',
+        'Ingresa los pesos de las muestras de humedad',
+        'Ingresa los datos de Límite Líquido y Plástico',
+        'Ingresa los datos del picnómetro',
+        'Ingresa las lecturas de esfuerzo cortante',
+        'Ingresa los datos de compactación Proctor',
+        'Define los parámetros de la cimentación'
+    ];
+    const visitedSteps = new Set([0]);
+
+    function goToStep(step) {
+        if (step < 0 || step >= TOTAL_STEPS) return;
+        visitedSteps.add(step);
+        currentStep = step;
+
+        // Show/hide sections
+        document.querySelectorAll('.wizard-section').forEach(s => {
+            s.classList.toggle('hidden', parseInt(s.dataset.step) !== step);
+        });
+
+        // Update subtitle
+        document.getElementById('wizard-subtitle').textContent = `Paso ${step + 1} de ${TOTAL_STEPS} — ${STEP_INSTRUCTIONS[step]}`;
+
+        // Update stepper dots
+        document.querySelectorAll('.step-dot').forEach((dot, i) => {
+            const circle = dot.querySelector('span:first-child');
+            const label = dot.querySelector('span:last-child');
+            circle.className = 'w-7 h-7 rounded-full flex items-center justify-center transition-all ';
+            if (i === step) {
+                circle.className += 'bg-blue-600 text-white ring-2 ring-blue-300';
+                if (label) { label.className = label.className.replace('text-gray-400', ''); label.classList.add('text-blue-700'); }
+            } else if (visitedSteps.has(i)) {
+                circle.className += 'bg-green-500 text-white';
+                circle.textContent = '✓';
+                if (label) { label.className = label.className.replace('text-gray-400', ''); label.classList.add('text-green-600'); }
+            } else {
+                circle.className += 'bg-gray-200 text-gray-500';
+                if (label) { label.className = label.className.replace('text-blue-700', '').replace('text-green-600', ''); label.classList.add('text-gray-400'); }
+            }
+        });
+
+        // Update nav buttons
+        document.getElementById('btn-prev').classList.toggle('hidden', step === 0);
+        document.getElementById('btn-next').classList.toggle('hidden', step === TOTAL_STEPS - 1);
+        document.getElementById('btn-calculate').classList.toggle('hidden', step !== TOTAL_STEPS - 1);
+
+        // Update right panel checklist
+        const checks = document.querySelectorAll('#step-checklist > div');
+        checks.forEach((ch, i) => {
+            const icon = ch.querySelector('span');
+            if (i === step) {
+                icon.textContent = '👉';
+                ch.className = 'flex items-center gap-2 text-blue-600 font-bold';
+            } else if (visitedSteps.has(i)) {
+                icon.textContent = '✅';
+                ch.className = 'flex items-center gap-2 text-green-600';
+            } else {
+                icon.textContent = '⬜';
+                ch.className = 'flex items-center gap-2 text-gray-400';
+            }
+        });
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextStep() { goToStep(currentStep + 1); }
+    function prevStep() { goToStep(currentStep - 1); }
+
+    // Collect all data and send to backend for report generation
+    async function calculateAllAndReport() {
         const statusPanel = document.getElementById('status-panel');
         const resultsPanel = document.getElementById('results-panel');
-
-        statusPanel.innerHTML = '<div class="text-blue-500 text-4xl animate-spin mb-2">⏳</div><p class="text-blue-600">Calculando todos los ensayos...</p>';
+        statusPanel.innerHTML = '<div class="text-blue-500 text-4xl animate-spin mb-2">⏳</div><p class="text-blue-600">Calculando y generando reporte...</p>';
+        statusPanel.classList.remove('hidden');
+        resultsPanel.classList.add('hidden');
 
         try {
-            // 1. Granulometry
-            const granData = {
-                total_dry_weight: parseFloat(document.getElementById('gran-total').value) || 0,
-                sieves: []
-            };
-            document.querySelectorAll('.gran-input').forEach(input => {
-                granData.sieves.push({
-                    size_label: input.dataset.size,
-                    opening_mm: parseFloat(input.dataset.mm),
-                    weight_retained: parseFloat(input.value) || 0
-                });
-            });
-            const granRes = await fetch('/granulometria', {
+            const payload = collectAllData();
+            const res = await fetch('/api/generar_reporte_manual', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(granData)
+                body: JSON.stringify(payload)
             });
-            const granResult = await granRes.json();
+            const result = await res.json();
 
-            // 2. Limits - Use field names expected by limits.py
-            const limitsData = {
-                ll_data: [1, 2, 3].map(i => ({
-                    blows: parseFloat(document.getElementById(`ll-blows-${i}`).value) || 0,
-                    tare: parseFloat(document.getElementById(`ll-tare-${i}`).value) || 0,
-                    wet_tare: parseFloat(document.getElementById(`ll-wet-${i}`).value) || 0,
-                    dry_tare: parseFloat(document.getElementById(`ll-dry-${i}`).value) || 0
-                })),
-                pl_data: [1, 2].map(i => ({
-                    tare: parseFloat(document.getElementById(`pl-tare-${i}`).value) || 0,
-                    wet_tare: parseFloat(document.getElementById(`pl-wet-${i}`).value) || 0,
-                    dry_tare: parseFloat(document.getElementById(`pl-dry-${i}`).value) || 0
-                }))
-            };
-            const limitsRes = await fetch('/limites', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(limitsData)
-            });
-            const limitsResult = await limitsRes.json();
+            if (result.success) {
+                statusPanel.classList.add('hidden');
+                resultsPanel.classList.remove('hidden');
+                // Update result cards
+                const r = result.calculated;
+                document.getElementById('res-sucs').textContent = r.sucs || '--';
+                document.getElementById('res-sucs-name').textContent = r.sucs_name || '--';
+                document.getElementById('res-phi').textContent = r.phi ? r.phi.toFixed(2) + '°' : '--';
+                document.getElementById('res-c').textContent = r.c ? r.c.toFixed(4) : '--';
+                document.getElementById('res-ll').textContent = r.ll ? r.ll.toFixed(2) : '--';
+                document.getElementById('res-lp').textContent = r.lp ? r.lp.toFixed(2) : '--';
+                document.getElementById('res-moisture').textContent = r.moisture ? r.moisture.toFixed(2) + '%' : '--';
+                document.getElementById('res-gs').textContent = r.gs ? r.gs.toFixed(2) : '--';
+                document.getElementById('res-mdd').textContent = r.mdd ? r.mdd.toFixed(3) : '--';
+                document.getElementById('res-qa').textContent = r.qa ? r.qa.toFixed(2) : '--';
 
-            // 3. Moisture - Use field names expected by moisture.py
-            const moistureData = {
-                samples: [1, 2].map(i => ({
-                    tare: parseFloat(document.getElementById(`moist-tare-${i}`).value) || 0,
-                    wet_tare: parseFloat(document.getElementById(`moist-wet-${i}`).value) || 0,
-                    dry_tare: parseFloat(document.getElementById(`moist-dry-${i}`).value) || 0
-                }))
-            };
-            const moistRes = await fetch('/humedad', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(moistureData)
-            });
-            const moistResult = await moistRes.json();
-
-            // 4. Direct Shear - Use field names expected by shear.py
-            const shearData = {
-                specimens: [1, 2, 3].map(i => ({
-                    normal_stress: parseFloat(document.getElementById(`shear-sigma-${i}`).value) || 0,
-                    shear_stress_max: parseFloat(document.getElementById(`shear-tau-${i}`).value) || 0
-                }))
-            };
-            const shearRes = await fetch('/corte', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(shearData)
-            });
-            const shearResult = await shearRes.json();
-
-            // 5. Auto Classification
-            const classRes = await fetch('/auto_classify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-            const classResult = await classRes.json();
-
-            // Update UI
-            statusPanel.classList.add('hidden');
-            resultsPanel.classList.remove('hidden');
-
-            // Populate results - Debug log
-            console.log('Granulometry result:', granResult);
-            console.log('Limits result:', limitsResult);
-            console.log('Moisture result:', moistResult);
-            console.log('Shear result:', shearResult);
-            console.log('Classification result:', classResult);
-
-            // SUCS Classification
-            document.getElementById('res-sucs').textContent = classResult.symbol || '--';
-            document.getElementById('res-sucs-name').textContent = classResult.name || '--';
-
-            // Granulometry metrics
-            if (granResult.metrics) {
-                // The backend returns 'fractions.fines' not 'fines_percent'
-                const fines = granResult.metrics.fractions?.fines ?? granResult.metrics.fines_percent;
-                document.getElementById('res-finos').textContent = fines ? fines.toFixed(2) + '%' : '--';
-                document.getElementById('res-cu').textContent = granResult.metrics.cu ?? '--';
+                // Store report HTML for viewing
+                window._reportHTML = result.report_html;
+            } else {
+                statusPanel.innerHTML = `<div class="text-red-500 text-4xl mb-2">❌</div><p class="text-red-600">${result.error}</p>`;
             }
-
-            // Atterberg Limits - Backend returns LL, PL, PI (not LP!)
-            if (limitsResult.results) {
-                document.getElementById('res-ll').textContent = limitsResult.results.LL ? limitsResult.results.LL.toFixed(2) + '%' : '--';
-                document.getElementById('res-lp').textContent = limitsResult.results.PL ? limitsResult.results.PL.toFixed(2) + '%' : '--';
-                document.getElementById('res-ip').textContent = limitsResult.results.PI ? limitsResult.results.PI.toFixed(2) + '%' : '--';
-            }
-
-            // Moisture - Backend returns 'average' not 'average_moisture'
-            if (moistResult.results) {
-                document.getElementById('res-moisture').textContent = moistResult.results.average ? moistResult.results.average + '%' : '--';
-            }
-
-            // Shear results
-            if (shearResult.results) {
-                document.getElementById('res-phi').textContent = shearResult.results.friction_angle ? shearResult.results.friction_angle + '°' : '--';
-                document.getElementById('res-c').textContent = shearResult.results.cohesion ?? '--';
-            }
-
         } catch (e) {
-            console.error('Error en calculateAll:', e);
-            statusPanel.innerHTML = '<div class="text-red-500 text-4xl mb-2">❌</div><p class="text-red-600">Error al calcular. Ver consola.</p>';
+            console.error(e);
+            statusPanel.innerHTML = '<div class="text-red-500 text-4xl mb-2">❌</div><p class="text-red-600">Error de conexión</p>';
         }
     }
 
-    async function saveCalicata() {
-        const data = {
-            project: document.getElementById('project').value,
-            calicata: document.getElementById('calicataId').value
+    function collectAllData() {
+        // Project
+        const project = {
+            nombre: document.getElementById('proj-nombre').value,
+            ubicacion: document.getElementById('proj-ubicacion').value,
+            zone: document.getElementById('proj-zone').value || '',
+            solicitante: document.getElementById('proj-solicitante').value,
+            calicata: document.getElementById('proj-calicata').value,
+            profundidad: document.getElementById('proj-profundidad').value,
+            muestra: document.getElementById('proj-muestra').value,
+            fecha: document.getElementById('proj-fecha').value,
+            tecnico: document.getElementById('proj-tecnico').value,
+            solicitud_nro: document.getElementById('proj-solicitud').value,
         };
-        const res = await fetch('/save_results', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+
+        // Granulometry
+        const sieves = [];
+        document.querySelectorAll('.gran-input').forEach(inp => {
+            sieves.push({ size_label: inp.dataset.label, opening_mm: parseFloat(inp.dataset.mm), weight_retained: parseFloat(inp.value) || 0 });
         });
-        const result = await res.json();
-        if (result.success) {
-            alert('✅ Calicata guardada correctamente');
+        const granulometry = {
+            total_dry_weight: parseFloat(document.getElementById('gran-total').value) || 0,
+            washed_weight: parseFloat(document.getElementById('gran-lavado').value) || 0,
+            sieves: sieves
+        };
+
+        // Moisture
+        const moisture = {
+            samples: [1, 2].map(i => ({
+                Mcws: parseFloat(document.getElementById(`moist-mcws-${i}`).value) || 0,
+                Mcs: parseFloat(document.getElementById(`moist-mcs-${i}`).value) || 0,
+                Mc: parseFloat(document.getElementById(`moist-mc-${i}`).value) || 0,
+            }))
+        };
+
+        // Limits
+        const ll_data = [1, 2, 3, 4].map(i => {
+            const v = document.getElementById(`ll-blows-${i}`).value;
+            if (!v) return null;
+            return {
+                blows: parseFloat(v) || 0,
+                wet_tare: parseFloat(document.getElementById(`ll-wet-${i}`).value) || 0,
+                dry_tare: parseFloat(document.getElementById(`ll-dry-${i}`).value) || 0,
+                tare: parseFloat(document.getElementById(`ll-tare-${i}`).value) || 0,
+            };
+        }).filter(x => x);
+        const pl_data = [1, 2, 3].map(i => {
+            const v = document.getElementById(`pl-wet-${i}`).value;
+            if (!v) return null;
+            return {
+                wet_tare: parseFloat(v) || 0,
+                dry_tare: parseFloat(document.getElementById(`pl-dry-${i}`).value) || 0,
+                tare: parseFloat(document.getElementById(`pl-tare-${i}`).value) || 0,
+            };
+        }).filter(x => x);
+        const limits = { ll_data, pl_data };
+
+        // Specific Gravity
+        const specific_gravity = {
+            samples: [1, 2].map(i => ({
+                ma: parseFloat(document.getElementById(`gs-ma-${i}`).value) || 0,
+                mb: parseFloat(document.getElementById(`gs-mb-${i}`).value) || 0,
+                a: parseFloat(document.getElementById(`gs-a-${i}`).value) || 0,
+                b: parseFloat(document.getElementById(`gs-b-${i}`).value) || 0,
+            }))
+        };
+
+        // Shear — full curves
+        const shear = {
+            specimen_side_cm: parseFloat(document.getElementById('shear-side').value) || 6,
+            specimen_height_cm: parseFloat(document.getElementById('shear-height').value) || 2.54,
+            specimens: [1, 2, 3].map(i => {
+                const curve = [];
+                SHEAR_STRAINS.forEach((e, j) => {
+                    const tau = parseFloat(document.getElementById(`shear-tau-${i}-${j + 1}`).value) || 0;
+                    curve.push({ strain_pct: e, shear_stress: tau });
+                });
+                return {
+                    normal_stress: parseFloat(document.getElementById(`shear-sigma-${i}`).value) || 0,
+                    side_cm: parseFloat(document.getElementById('shear-side').value) || 6,
+                    height_cm: parseFloat(document.getElementById('shear-height').value) || 2.54,
+                    dry_density: parseFloat(document.getElementById('shear-density').value) || 1.52,
+                    moisture_pct: parseFloat(document.getElementById('shear-moisture').value) || 6.07,
+                    curve: curve
+                };
+            })
+        };
+
+        // Proctor
+        const moldVol = parseFloat(document.getElementById('proctor-vol').value) || 944;
+        const moldWt = parseFloat(document.getElementById('proctor-mold').value) || 4180;
+        const proctor = {
+            mold_volume_cm3: moldVol, mold_weight_g: moldWt,
+            layers: parseInt(document.getElementById('proctor-layers').value) || 5,
+            blows_per_layer: parseInt(document.getElementById('proctor-blows').value) || 25,
+            points: [1, 2, 3, 4, 5].map(i => {
+                const wm = parseFloat(document.getElementById(`proctor-wm-${i}`).value) || 0;
+                if (!wm) return null;
+                return {
+                    wet_weight_mold: wm,
+                    tare_id: document.getElementById(`proctor-tare-id-${i}`).value || `T-${i}`,
+                    wet_tare: parseFloat(document.getElementById(`proctor-wht-${i}`).value) || 0,
+                    dry_tare: parseFloat(document.getElementById(`proctor-wst-${i}`).value) || 0,
+                    tare: parseFloat(document.getElementById(`proctor-wt-${i}`).value) || 0,
+                };
+            }).filter(x => x)
+        };
+
+        // Foundation
+        const foundation = {
+            B: parseFloat(document.getElementById('found-b').value) || 1,
+            L: parseFloat(document.getElementById('found-l').value) || 1,
+            Df: parseFloat(document.getElementById('found-df').value) || 1.5,
+            FS: parseFloat(document.getElementById('found-fs').value) || 3,
+            type: document.getElementById('found-type').value,
+            failure_mode: document.getElementById('found-failure').value,
+        };
+
+        return { project, granulometry, moisture, limits, specific_gravity, shear, proctor, foundation };
+    }
+
+    function openReport() {
+        if (window._reportHTML) {
+            const w = window.open('', '_blank');
+            w.document.write(window._reportHTML);
+            w.document.close();
         } else {
-            alert('❌ Error al guardar');
+            alert('Primero calcula el reporte');
         }
     }
 
-    // Load sample data for quick testing (from ENSAYOS.xlsx)
-    function loadSampleData() {
-        // Project Info
-        document.getElementById('client').value = 'MUNICIPALIDAD DISTRITAL DE SAN MARCOS';
-        document.getElementById('project').value = 'MEJORAMIENTO Y AMPLIACION DEL SERVICIO DE TRANSITABILIDAD';
-        document.getElementById('calicataId').value = 'C-01';
-        document.getElementById('depth').value = '1.50';
 
-        // Granulometry - total weight
-        document.getElementById('gran-total').value = '2560';
-
-        // Granulometry - sieve masses (from ENSAYOS.xlsx)
-        const sieveMasses = {
-            '3"': 0,
-            '1 1/2"': 0,
-            '3/4"': 0,
-            '3/8"': 0,
-            '# 4': 0,
-            '# 8': 125.80,
-            '# 16': 203.60,
-            '# 30': 142.20,
-            '# 50': 95.60,
-            '# 100': 65.60,
-            '# 200': 20.30
-        };
-        document.querySelectorAll('.gran-input').forEach(input => {
-            const label = input.dataset.size;
-            if (sieveMasses[label] !== undefined) {
-                input.value = sieveMasses[label];
-            }
-        });
-
-        // Liquid Limit data (3 points)
-        document.getElementById('ll-blows-1').value = '35';
-        document.getElementById('ll-tare-1').value = '27.50';
-        document.getElementById('ll-wet-1').value = '42.30';
-        document.getElementById('ll-dry-1').value = '38.20';
-
-        document.getElementById('ll-blows-2').value = '28';
-        document.getElementById('ll-tare-2').value = '28.10';
-        document.getElementById('ll-wet-2').value = '43.80';
-        document.getElementById('ll-dry-2').value = '39.00';
-
-        document.getElementById('ll-blows-3').value = '18';
-        document.getElementById('ll-tare-3').value = '27.80';
-        document.getElementById('ll-wet-3').value = '45.50';
-        document.getElementById('ll-dry-3').value = '39.80';
-
-        // Plastic Limit data (2 samples)
-        document.getElementById('pl-tare-1').value = '27.20';
-        document.getElementById('pl-wet-1').value = '32.50';
-        document.getElementById('pl-dry-1').value = '31.40';
-
-        document.getElementById('pl-tare-2').value = '27.80';
-        document.getElementById('pl-wet-2').value = '33.10';
-        document.getElementById('pl-dry-2').value = '31.90';
-
-        // Moisture data (2 samples)
-        document.getElementById('moist-tare-1').value = '28.50';
-        document.getElementById('moist-wet-1').value = '85.30';
-        document.getElementById('moist-dry-1').value = '81.80';
-
-        document.getElementById('moist-tare-2').value = '29.10';
-        document.getElementById('moist-wet-2').value = '88.60';
-        document.getElementById('moist-dry-2').value = '84.90';
-
-        // Direct Shear (3 specimens)
-        document.getElementById('shear-sigma-1').value = '0.50';
-        document.getElementById('shear-tau-1').value = '0.27';
-
-        document.getElementById('shear-sigma-2').value = '1.00';
-        document.getElementById('shear-tau-2').value = '0.50';
-
-        document.getElementById('shear-sigma-3').value = '1.50';
-        document.getElementById('shear-tau-3').value = '0.73';
-
-        alert('✅ Datos de ejemplo cargados. Presiona "CALCULAR TODO" para ver resultados.');
-    }
 
     // Initialize
     initSieveTable();
+    initShearSpecimens();
+    initProctorPoints();
 </script>
 {% endblock %}

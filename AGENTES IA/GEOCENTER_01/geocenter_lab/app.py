@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, make_response
 import random
 import traceback
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'core'))
 from core.granulometry import calculate_granulometry
 from core.limits import calculate_limits
 from core.classification import calculate_sucs
@@ -17,6 +19,7 @@ from core.correlations import get_all_correlations
 from core.database import save_project, save_calicata, save_test, get_all_projects, get_recent_tests, get_statistics_by_sucs
 from core.synthetic_lab_data import generate_all_lab_data
 from core.report_generator import generate_report
+from core.zone_profiles import ZONE_PROFILES, get_zone_defaults, get_zone_ranges, PERU_DEPARTMENTS, altitude_adjust, get_department_zone
 
 
 app = Flask(__name__)
@@ -72,7 +75,7 @@ def home():
 @app.route('/calicata')
 def calicata():
     """Unified data entry mode for complete calicata workflow"""
-    return render_template('calicata.html')
+    return render_template('calicata.html', zone_profiles=ZONE_PROFILES, departments=PERU_DEPARTMENTS)
 
 @app.route('/granulometria', methods=['GET', 'POST'])
 def granulometry():
@@ -432,13 +435,37 @@ def list_recent_tests():
 @app.route('/automatico')
 def automatico():
     """Hybrid automatic mode - select SUCS, generate or fill manually"""
-    return render_template('automatico.html', soil_params=SOIL_PARAMETERS)
+    return render_template('automatico.html', soil_params=SOIL_PARAMETERS, zone_profiles=ZONE_PROFILES, departments=PERU_DEPARTMENTS)
+
+@app.route('/api/zone_defaults')
+def zone_defaults():
+    """Get default soil parameters for a zone + SUCS combination"""
+    zone = request.args.get('zone', '')
+    sucs = request.args.get('sucs', '')
+    altitude = request.args.get('altitude', None)
+    defaults = get_zone_defaults(zone, sucs)
+    ranges = get_zone_ranges(zone, sucs)
+    if not defaults:
+        return jsonify({'error': 'Zona o SUCS no encontrado'}), 404
+    # Apply altitude adjustment if provided
+    if altitude is not None:
+        try:
+            defaults = altitude_adjust(defaults, float(altitude), zone)
+        except (ValueError, TypeError):
+            pass
+    return jsonify({'defaults': defaults, 'ranges': ranges})
+
+@app.route('/api/departments')
+def departments():
+    """Get list of departments with their default zones"""
+    return jsonify(PERU_DEPARTMENTS)
 
 @app.route('/api/generar_reporte', methods=['POST'])
 def generar_reporte():
     """Full pipeline: params -> synthetic data -> calculations -> HTML report"""
     try:
         data = request.get_json()
+        zone = data.get('zone', '')
         
         # Extract parameters
         params = {
@@ -460,6 +487,15 @@ def generar_reporte():
         Df = float(data.get('Df', 1.5))
         FS = float(data.get('FS', 3))
         foundation_type = data.get('foundation_type', 'square')
+        
+        # NTE E.050 extended params
+        gamma_sat = data.get('gamma_sat')
+        gamma_sat = float(gamma_sat) if gamma_sat else None
+        water_table = data.get('water_table')
+        water_table = float(water_table) if water_table else None
+        num_levels = data.get('num_levels')
+        num_levels = int(num_levels) if num_levels else None
+        building_category = data.get('building_category', 'B') or 'B'
         
         # Set random seed for reproducibility (optional)
         seed = data.get('seed', None)
@@ -506,7 +542,11 @@ def generar_reporte():
         # Direct Shear
         r = calculate_direct_shear(raw_data['shear'])
         results['shear'] = r['results']
-        results['shear']['specimens'] = raw_data['shear']['specimens']
+        # Merge raw dial data into processed specimens (keep processed curves for charts)
+        for i, raw_spec in enumerate(raw_data['shear']['specimens']):
+            if i < len(results['shear']['specimens']):
+                results['shear']['specimens'][i]['dial_readings'] = raw_spec.get('curve', [])
+                results['shear']['specimens'][i]['normal_force_kg'] = raw_spec.get('normal_force_kg', 0)
         shear_res = r['results']
         
         # Classification
@@ -522,8 +562,16 @@ def generar_reporte():
             'foundation_depth': Df,
             'factor_of_safety': FS,
             'foundation_type': foundation_type,
-            'failure_mode': 'local'
+            'failure_mode': 'local',
         }
+        # Add NTE E.050 fields if provided
+        if gamma_sat is not None:
+            bc_data['saturated_weight'] = gamma_sat
+        if water_table is not None:
+            bc_data['water_table_depth'] = water_table
+        if num_levels is not None:
+            bc_data['num_levels'] = num_levels
+            bc_data['building_category'] = building_category
         try:
             r_bc = calculate_bearing_capacity(bc_data)
             bc_results = r_bc.get('results', r_bc)
@@ -552,6 +600,10 @@ def generar_reporte():
             'factor_of_safety': FS,
             'foundation_type': foundation_type,
         }
+        if gamma_sat is not None:
+            bc_data_m['saturated_weight'] = gamma_sat
+        if water_table is not None:
+            bc_data_m['water_table_depth'] = water_table
         try:
             r_m = calculate_meyerhof_capacity(bc_data_m)
             m_results = r_m.get('results', r_m)
@@ -581,6 +633,7 @@ def generar_reporte():
             'tecnico': data.get('tecnico', 'J.L.C.'),
             'coordenadas': data.get('coordenadas', ''),
             'material': params['sucs'],
+            'sucs': params['sucs'],
             'solicitud_nro': data.get('solicitud_nro', ''),
             'descripcion': 'Capacidad Portante',
         }
@@ -604,6 +657,204 @@ def generar_reporte():
             }
         })
         
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
+@app.route('/api/generar_reporte_manual', methods=['POST'])
+def generar_reporte_manual():
+    """Generate CP-Jangas report from raw manual lab data (red fields → blue fields → report)"""
+    try:
+        data = request.json
+        proj = data.get('project', {})
+        results = {}
+        calculated = {}
+
+        # 1. Moisture
+        moist_raw = data.get('moisture', {})
+        if moist_raw.get('samples'):
+            samples_input = []
+            for s in moist_raw['samples']:
+                mcws = s.get('Mcws', 0)
+                mcs = s.get('Mcs', 0)
+                mc = s.get('Mc', 0)
+                if mcws and mcs and mc:
+                    samples_input.append({'wet_tare': mcws, 'dry_tare': mcs, 'tare': mc})
+            if samples_input:
+                r = calculate_moisture({'samples': samples_input})
+                results['moisture'] = r.get('results', {})
+                calculated['moisture'] = results['moisture'].get('average', 0)
+
+        # 2. Limits
+        limits_raw = data.get('limits', {})
+        if limits_raw.get('ll_data'):
+            r = calculate_limits(limits_raw)
+            results['limits'] = r.get('results', {})
+            calculated['ll'] = results['limits'].get('LL', 0)
+            calculated['lp'] = results['limits'].get('PL', 0)
+
+        # 3. Specific Gravity
+        sg_raw = data.get('specific_gravity', {})
+        if sg_raw.get('samples'):
+            sg_samples = []
+            for s in sg_raw['samples']:
+                ma = s.get('ma', 0)
+                mb = s.get('mb', 0)
+                a = s.get('a', 0)
+                b = s.get('b', 0)
+                if ma and mb and a:
+                    mo = a - b
+                    gs = mo / (mo + (ma - mb)) if (mo + (ma - mb)) != 0 else 0
+                    sg_samples.append({'ma': ma, 'mb': mb, 'a': a, 'b': b, 'mo': mo, 'gs': round(gs, 2)})
+            if sg_samples:
+                avg_gs = round(sum(s['gs'] for s in sg_samples) / len(sg_samples), 2)
+                results['specific_gravity'] = {'samples': sg_samples, 'average_gs': avg_gs}
+                calculated['gs'] = avg_gs
+
+        # 4. Granulometry
+        gran_raw = data.get('granulometry', {})
+        if gran_raw.get('sieves'):
+            r = calculate_granulometry(gran_raw)
+            results['granulometry'] = {'data': r.get('data', []), 'metrics': r.get('metrics', {})}
+            if results.get('limits'):
+                results['granulometry']['limits'] = {
+                    'LL': results['limits'].get('LL', 0),
+                    'PL': results['limits'].get('PL', 0),
+                    'PI': results['limits'].get('PI', 0),
+                }
+            if results.get('moisture'):
+                results['granulometry']['moisture'] = {'average': results['moisture'].get('average', 0)}
+            results['granulometry']['classification'] = {'symbol': 'SM', 'description': 'Arena limosa'}
+
+        # 5. Direct Shear
+        shear_raw = data.get('shear', {})
+        if shear_raw.get('specimens'):
+            r = calculate_direct_shear(shear_raw)
+            shear_res = r.get('results', {})
+            results['shear'] = shear_res
+            results['shear']['specimens'] = shear_raw['specimens']
+            calculated['phi'] = shear_res.get('friction_angle', 0)
+            calculated['c'] = shear_res.get('cohesion', 0)
+
+        # 6. Proctor
+        proctor_raw = data.get('proctor', {})
+        if proctor_raw.get('points'):
+            mold_vol = proctor_raw.get('mold_volume_cm3', 944)
+            mold_wt = proctor_raw.get('mold_weight_g', 4180)
+            points = []
+            for pt in proctor_raw['points']:
+                wm = pt.get('wet_weight_mold', 0)
+                wms = wm - mold_wt
+                wet_density = wms / mold_vol if mold_vol > 0 else 0
+                wht = pt.get('wet_tare', 0)
+                wst = pt.get('dry_tare', 0)
+                wt = pt.get('tare', 0)
+                water = wht - wst
+                solids = wst - wt
+                w = (water / solids * 100) if solids > 0 else 0
+                dd = wet_density / (1 + w / 100) if w > 0 else wet_density
+                points.append({
+                    'moisture_percent': round(w, 2),
+                    'dry_density': round(dd, 3),
+                    'wet_weight_mold': wm,
+                    'wet_density': round(wet_density, 3),
+                    'tare_id': pt.get('tare_id', ''),
+                    'wet_tare': wht, 'dry_tare': wst, 'tare': wt,
+                })
+
+            # Find MDD/OMC
+            if points:
+                max_pt = max(points, key=lambda p: p['dry_density'])
+                mdd = max_pt['dry_density']
+                omc = max_pt['moisture_percent']
+                results['proctor'] = {
+                    'results': {
+                        'mdd': mdd, 'omc': omc,
+                        'method': 'Proctor Modificado',
+                        'energy': '56000 lb-ft/ft³',
+                        'mold_volume_cm3': mold_vol, 'mold_weight_g': mold_wt,
+                        'layers': proctor_raw.get('layers', 5),
+                        'blows_per_layer': proctor_raw.get('blows_per_layer', 25),
+                        'gs': calculated.get('gs', 2.65),
+                        'points': points
+                    }
+                }
+                calculated['mdd'] = mdd
+
+        # 7. Bearing Capacity
+        found_raw = data.get('foundation', {})
+        phi = calculated.get('phi', 0)
+        c = calculated.get('c', 0)
+        gamma = calculated.get('mdd', 1.52)
+        B = found_raw.get('B', 1)
+        L = found_raw.get('L', 1)
+        Df = found_raw.get('Df', 1.5)
+        FS = found_raw.get('FS', 3)
+
+        if phi > 0:
+            bc_data = {
+                'cohesion': c, 'friction_angle': phi, 'unit_weight': gamma,
+                'foundation_width': B, 'foundation_length': L,
+                'foundation_depth': Df, 'factor_of_safety': FS,
+                'foundation_type': found_raw.get('type', 'square'),
+                'failure_mode': found_raw.get('failure_mode', 'local'),
+            }
+            try:
+                r_bc = calculate_bearing_capacity(bc_data)
+                bc_results = r_bc.get('results', r_bc)
+                bc_results.update({'phi': phi, 'c': c, 'gamma': gamma, 'B': B, 'L': L, 'Df': Df, 'FS': FS})
+                factors = bc_results.get('factors', {})
+                bc_results['Nc'] = factors.get('Nc', 0)
+                bc_results['Nq'] = factors.get('Nq', 0)
+                bc_results['Ng'] = factors.get('Ng', 0)
+                results['bearing_capacity'] = bc_results
+                calculated['qa'] = bc_results.get('qa_kgcm2', 0)
+            except:
+                pass
+
+            # Meyerhof
+            try:
+                bc_m = bc_data.copy()
+                bc_m.pop('failure_mode', None)
+                r_m = calculate_meyerhof_capacity(bc_m)
+                m_res = r_m.get('results', r_m)
+                m_res.update({'phi': phi, 'c': c, 'gamma': gamma, 'B': B, 'Df': Df, 'FS': FS})
+                mf = m_res.get('factors', {})
+                m_res['Nc'] = mf.get('Nc', 0)
+                m_res['Nq'] = mf.get('Nq', 0)
+                m_res['Ng'] = mf.get('Ng', 0)
+                results['meyerhof'] = m_res
+            except:
+                pass
+
+        # Auto-classify
+        calculated['sucs'] = 'SM'
+        calculated['sucs_name'] = 'Arena limosa'
+
+        # 8. Generate Report
+        project = {
+            'nombre': proj.get('nombre', ''),
+            'ubicacion': proj.get('ubicacion', ''),
+            'solicitante': proj.get('solicitante', ''),
+            'calicata': proj.get('calicata', 'C-1'),
+            'profundidad': proj.get('profundidad', '1.50 m'),
+            'muestra': proj.get('muestra', 'Mab-01'),
+            'fecha': proj.get('fecha', ''),
+            'tecnico': proj.get('tecnico', ''),
+            'solicitud_nro': proj.get('solicitud_nro', ''),
+            'material': calculated.get('sucs', 'SM'),
+            'sucs': calculated.get('sucs', data.get('sucs', 'SM')),
+            'descripcion': 'Capacidad Portante',
+        }
+
+        report_html = generate_report(project, results)
+
+        return jsonify({
+            'success': True,
+            'calculated': calculated,
+            'report_html': report_html,
+        })
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
 
